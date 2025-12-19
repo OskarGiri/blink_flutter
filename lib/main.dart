@@ -1,6 +1,7 @@
 import 'package:blink_flutter/screen/chat_screen.dart';
 import 'package:blink_flutter/screen/dashboard_screen.dart';
 import 'package:blink_flutter/screen/profile_screen.dart';
+import 'package:blink_flutter/theme/theme_data.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: getApplicationTheme(),
       routes: {
         '/': (context) => const DashboardScreen(),
         '/chat': (context) => const ChatScreen(),
