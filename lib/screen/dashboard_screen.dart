@@ -8,8 +8,41 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int currentImage = 0;
+
+  final List<String> images = [
+    'assets/dog1.jpg',
+    'assets/dog2.jpg',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            /// IMAGE SWIPER
+            Expanded(
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    itemCount: images.length,
+                    onPageChanged: (index) {
+                      setState(() => currentImage = index);
+                    },
+                    itemBuilder: (context, index) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          images[index],
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    },
+                  ),
+              ),
+            )
