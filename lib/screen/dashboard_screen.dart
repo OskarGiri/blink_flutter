@@ -10,7 +10,10 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int currentImage = 0;
 
-  final List<String> images = ['assets/dog1.jpg', 'assets/dog2.jpg'];
+  final List<String> images = [
+    'assets/images/butterfly@.jpg',
+    'assets/images/butterfly.jpg',
+  ];
 
   @override
   Widget build(BuildContext context) {
