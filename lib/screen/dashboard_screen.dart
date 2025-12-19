@@ -118,3 +118,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+      /// BOTTOM NAV
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 1) Navigator.pushNamed(context, '/chat');
+          if (index == 2) Navigator.pushNamed(context, '/profile');
+        },
+        items: const [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble), label: ''),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person), label: ''),
+        ],
+      ),
+    );
+  }
+
+  Widget actionButton(IconData icon, Color color) {
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.white,
+      child: Icon(icon, color: color, size: 28),
+    );
+  }
+}
