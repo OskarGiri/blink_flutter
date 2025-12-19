@@ -46,3 +46,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
               ),
             )
+
+                 /// TOP IMAGE INDICATORS
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    right: 12,
+                    child: Row(
+                      children: List.generate(
+                        images.length,
+                        (index) => Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: currentImage == index
+                                  ? Colors.white
+                                  : Colors.grey,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
