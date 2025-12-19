@@ -102,3 +102,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),   
+
+                /// ACTION BUTTONS
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  actionButton(Icons.refresh, Colors.orange),
+                  actionButton(Icons.close, Colors.red),
+                  actionButton(Icons.favorite, Colors.green),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
