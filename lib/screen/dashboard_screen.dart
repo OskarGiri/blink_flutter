@@ -70,3 +70,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
+               /// USER INFO
+                  Positioned(
+                    bottom: 90,
+                    left: 16,
+                    right: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Ram, 26 ✔",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          children: const [
+                            Chip(label: Text("Online shopping")),
+                            Chip(label: Text("Anime")),
+                            Chip(label: Text("Horror films")),
+                            Chip(label: Text("Skincare")),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),   
