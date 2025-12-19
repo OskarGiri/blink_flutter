@@ -10,10 +10,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int currentImage = 0;
 
-  final List<String> images = [
-    'assets/dog1.jpg',
-    'assets/dog2.jpg',
-  ];
+  final List<String> images = ['assets/dog1.jpg', 'assets/dog2.jpg'];
 
   @override
   Widget build(BuildContext context) {
@@ -44,10 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
-              ),
-            )
 
-                 /// TOP IMAGE INDICATORS
+                  /// TOP IMAGE INDICATORS
                   Positioned(
                     top: 12,
                     left: 12,
@@ -70,7 +65,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-               /// USER INFO
+
+                  /// USER INFO
                   Positioned(
                     bottom: 90,
                     left: 16,
@@ -101,9 +97,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-            ),   
+            ),
 
-                /// ACTION BUTTONS
+            /// ACTION BUTTONS
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Row(
@@ -118,6 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+
       /// BOTTOM NAV
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
@@ -126,12 +123,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (index == 2) Navigator.pushNamed(context, '/profile');
         },
         items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble), label: ''),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
         ],
       ),
     );
