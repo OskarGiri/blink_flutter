@@ -1,7 +1,7 @@
 import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
-import 'package:blink_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -11,13 +11,10 @@ class SignUpScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final double inputWidth = size.width * 0.85;
 
-    // Controllers for TextFields
-    final fullNameController = TextEditingController();
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-
-    // Access the AuthProvider
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // Controllers for input fields
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -40,61 +37,33 @@ class SignUpScreen extends StatelessWidget {
 
               // Full Name
               Text("Full Name", style: TextStyle(color: Colors.purple.shade600)),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
-                child: TextField(
-                  controller: fullNameController,
-                  decoration: InputDecoration(
-                    fillColor: Colors.grey.shade200,
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
+                child: TextField(controller: nameController),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Email
               Text("Your Email", style: TextStyle(color: Colors.purple.shade600)),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
-                child: TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    fillColor: Colors.grey.shade200,
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
+                child: TextField(controller: emailController),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Password
               Text("Password", style: TextStyle(color: Colors.purple.shade600)),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
                 child: TextField(
-                  controller: passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    fillColor: Colors.grey.shade200,
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                  controller: passwordController,
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
               // Sign Up Button
               SizedBox(
@@ -108,29 +77,36 @@ class SignUpScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    // Use AuthProvider for Clean Architecture Signup
-                    await authProvider.signup(
-                      emailController.text,
-                      passwordController.text,
-                    );
+                    final authProvider =
+                        Provider.of<AuthProvider>(context, listen: false);
+
+                    final name = nameController.text.trim();
+                    final email = emailController.text.trim();
+                    final password = passwordController.text.trim();
+
+                    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please fill all fields")),
+                      );
+                      return;
+                    }
+
+                    await authProvider.signup(email, password);
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Signup Successful')),
+                      const SnackBar(content: Text("Signup successful!")),
                     );
 
-                    // Navigate to LoginScreen
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                     );
                   },
                   child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
                 ),
               ),
 
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -141,8 +117,7 @@ class SignUpScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
+                              builder: (context) => const LoginScreen()),
                         );
                       },
                       child: const Text(

@@ -1,8 +1,8 @@
 import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
-import 'package:blink_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -11,14 +11,9 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Controllers for input fields
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
-    // Access AuthProvider
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // Set responsive width
     final contentWidth = screenWidth > 600 ? 450.0 : screenWidth * 0.9;
 
     return Scaffold(
@@ -33,8 +28,6 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-
-                  // Title
                   Text(
                     "WELCOME BACK\nTO\nBlink",
                     textAlign: TextAlign.center,
@@ -44,10 +37,8 @@ class LoginScreen extends StatelessWidget {
                       color: const Color(0xffB43AE6),
                     ),
                   ),
-
                   const SizedBox(height: 40),
 
-                  // Email label + field
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -56,17 +47,13 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  SizedBox(
+                  Container(
                     height: 48,
-                    child: TextField(
-                      controller: emailController,
-                      decoration: BoxDecorationInput(),
-                    ),
+                    color: Colors.grey.shade300,
+                    child: TextField(controller: emailController),
                   ),
-
                   const SizedBox(height: 20),
 
-                  // Password label + field
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -75,16 +62,15 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  SizedBox(
+                  Container(
                     height: 48,
+                    color: Colors.grey.shade300,
                     child: TextField(
                       controller: passwordController,
                       obscureText: true,
-                      decoration: BoxDecorationInput(),
                     ),
                   ),
 
-                  // Forget Password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -97,8 +83,6 @@ class LoginScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -110,16 +94,29 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () async {
-                        // Use AuthProvider for Clean Architecture login
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+
+                        final email = emailController.text.trim();
+                        final password = passwordController.text.trim();
+
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Please fill all fields"),
+                            ),
+                          );
+                          return;
+                        }
+
                         final success = await authProvider.login(
-                          emailController.text,
-                          passwordController.text,
+                          email,
+                          password,
                         );
 
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Login Successful')),
-                          );
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -128,7 +125,9 @@ class LoginScreen extends StatelessWidget {
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Invalid Email/Password')),
+                            const SnackBar(
+                              content: Text("Invalid credentials"),
+                            ),
                           );
                         }
                       },
@@ -143,40 +142,6 @@ class LoginScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 25),
-
-                  // Divider with text
-                  Row(
-                    children: const [
-                      Expanded(child: Divider(thickness: 0.8)),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Text("instant login"),
-                      ),
-                      Expanded(child: Divider(thickness: 0.8)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.g_mobiledata, size: 30),
-                        label: const Text("Google"),
-                      ),
-                      const SizedBox(width: 20),
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.facebook, color: Colors.blue),
-                        label: const Text("Facebook"),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -200,7 +165,6 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
                 ],
               ),
@@ -210,16 +174,4 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-// Helper function to keep consistent decoration for TextFields
-InputDecoration BoxDecorationInput() {
-  return InputDecoration(
-    fillColor: Colors.grey.shade300,
-    filled: true,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide.none,
-    ),
-  );
 }
