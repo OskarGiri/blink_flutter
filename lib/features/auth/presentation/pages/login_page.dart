@@ -1,6 +1,8 @@
-import 'package:blink_flutter/screens/dashboard.dart';
-import 'package:blink_flutter/screens/sign_screen.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
+import 'package:blink_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -9,7 +11,14 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Set responsive width (max width for tablet center alignment)
+    // Controllers for input fields
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    // Access AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Set responsive width
     final contentWidth = screenWidth > 600 ? 450.0 : screenWidth * 0.9;
 
     return Scaffold(
@@ -47,11 +56,11 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Container(
+                  SizedBox(
                     height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
+                    child: TextField(
+                      controller: emailController,
+                      decoration: BoxDecorationInput(),
                     ),
                   ),
 
@@ -66,11 +75,12 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Container(
+                  SizedBox(
                     height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
+                    child: TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: BoxDecorationInput(),
                     ),
                   ),
 
@@ -99,14 +109,28 @@ class LoginScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {
-                        // Navigate to Dashboard on login
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardScreen(),
-                          ),
+                      onPressed: () async {
+                        // Use AuthProvider for Clean Architecture login
+                        final success = await authProvider.login(
+                          emailController.text,
+                          passwordController.text,
                         );
+
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Login Successful')),
+                          );
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DashboardScreen(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Invalid Email/Password')),
+                          );
+                        }
                       },
                       child: Text(
                         "Login",
@@ -186,4 +210,16 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+// Helper function to keep consistent decoration for TextFields
+InputDecoration BoxDecorationInput() {
+  return InputDecoration(
+    fillColor: Colors.grey.shade300,
+    filled: true,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide.none,
+    ),
+  );
 }

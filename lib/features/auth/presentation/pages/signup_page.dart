@@ -1,5 +1,7 @@
-import 'package:blink_flutter/screens/Login_screen.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
+import 'package:blink_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -8,6 +10,14 @@ class SignUpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final double inputWidth = size.width * 0.85;
+
+    // Controllers for TextFields
+    final fullNameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    // Access the AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,14 +39,12 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(height: size.height * 0.06),
 
               // Full Name
-              Text(
-                "Full Name",
-                style: TextStyle(color: Colors.purple.shade600),
-              ),
+              Text("Full Name", style: TextStyle(color: Colors.purple.shade600)),
               SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
                 child: TextField(
+                  controller: fullNameController,
                   decoration: InputDecoration(
                     fillColor: Colors.grey.shade200,
                     filled: true,
@@ -50,14 +58,12 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(height: 20),
 
               // Email
-              Text(
-                "Your Email",
-                style: TextStyle(color: Colors.purple.shade600),
-              ),
+              Text("Your Email", style: TextStyle(color: Colors.purple.shade600)),
               SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
                 child: TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     fillColor: Colors.grey.shade200,
                     filled: true,
@@ -76,6 +82,7 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(
                 width: inputWidth,
                 child: TextField(
+                  controller: passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     fillColor: Colors.grey.shade200,
@@ -100,7 +107,18 @@ class SignUpScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    // Use AuthProvider for Clean Architecture Signup
+                    await authProvider.signup(
+                      emailController.text,
+                      passwordController.text,
+                    );
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Signup Successful')),
+                    );
+
+                    // Navigate to LoginScreen
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
