@@ -8,6 +8,7 @@ void main() async {
   Hive.registerAdapter(UserModelAdapter()); //  THIS LINE
 
   await Hive.openBox<UserModel>('users'); //OPEN BOx
+  await testHive();
   runApp(const MyApp());
 }
 
@@ -28,5 +29,23 @@ class MyApp extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> testHive() async {
+  final box = Hive.box<UserModel>('users');
+
+  // Signup (save user)
+  final user = UserModel(email: 'test@gmail.com', password: '123456');
+
+  await box.put(user.email, user);
+
+  // Login (read user)
+  final savedUser = box.get('test@gmail.com');
+
+  if (savedUser != null) {
+    debugPrint('LOGIN SUCCESS: ${savedUser.email}');
+  } else {
+    debugPrint('LOGIN FAILED');
   }
 }

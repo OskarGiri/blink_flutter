@@ -10,9 +10,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signup(User user) async {
-    final model =
-        UserModel(email: user.email, password: user.password);
-    await localDataSource.signup(model);
+    final userModel = UserModel(email: user.email, password: user.password);
+    await localDataSource.signup(userModel);
   }
 
   @override
