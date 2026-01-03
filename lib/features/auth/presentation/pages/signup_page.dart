@@ -36,7 +36,10 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(height: size.height * 0.06),
 
               // Full Name
-              Text("Full Name", style: TextStyle(color: Colors.purple.shade600)),
+              Text(
+                "Full Name",
+                style: TextStyle(color: Colors.purple.shade600),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
@@ -45,7 +48,10 @@ class SignUpScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Email
-              Text("Your Email", style: TextStyle(color: Colors.purple.shade600)),
+              Text(
+                "Your Email",
+                style: TextStyle(color: Colors.purple.shade600),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: inputWidth,
@@ -77,8 +83,10 @@ class SignUpScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    final authProvider =
-                        Provider.of<AuthProvider>(context, listen: false);
+                    final authProvider = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    );
 
                     final name = nameController.text.trim();
                     final email = emailController.text.trim();
@@ -99,7 +107,9 @@ class SignUpScreen extends StatelessWidget {
 
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
                     );
                   },
                   child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
@@ -117,7 +127,8 @@ class SignUpScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const LoginScreen()),
+                            builder: (context) => const LoginScreen(),
+                          ),
                         );
                       },
                       child: const Text(
