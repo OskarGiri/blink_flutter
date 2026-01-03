@@ -7,10 +7,7 @@ class AuthProvider extends ChangeNotifier {
   final SignupUser signupUser;
   final LoginUser loginUser;
 
-  AuthProvider({
-    required this.signupUser,
-    required this.loginUser,
-  });
+  AuthProvider({required this.signupUser, required this.loginUser});
 
   Future<void> signup(String email, String password) async {
     await signupUser(User(email: email, password: password));

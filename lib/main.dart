@@ -1,3 +1,7 @@
+import 'package:blink_flutter/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:blink_flutter/features/auth/data/repositories/auth_repo_impl.dart';
+import 'package:blink_flutter/features/auth/domain/usecases/login_user.dart';
+import 'package:blink_flutter/features/auth/domain/usecases/signup_user.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'features/auth/data/models/user_model.dart';
@@ -5,47 +9,36 @@ import 'features/auth/data/models/user_model.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  Hive.registerAdapter(UserModelAdapter()); //  THIS LINE
 
-  await Hive.openBox<UserModel>('users'); //OPEN BOx
-  await testHive();
-  runApp(const MyApp());
+  Hive.registerAdapter(UserModelAdapter());
+  final box = await Hive.openBox<UserModel>('users');
+
+  final authLocalDataSource = AuthLocalDataSource(box);
+  final authRepository = AuthRepositoryImpl(authLocalDataSource);
+  final signupUseCase = SignupUser(authRepository);
+  final loginUseCase = LoginUser(authRepository);
+
+  runApp(MyApp(signupUseCase: signupUseCase, loginUseCase: loginUseCase));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SignupUser signupUseCase;
+  final LoginUser loginUseCase;
+
+  const MyApp({
+    super.key,
+    required this.signupUseCase,
+    required this.loginUseCase,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Blink App',
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'App Started Successfully',
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
+      home: Scaffold(
+        body: Center(child: Text('Clean Architecture + Hive Ready')),
       ),
     );
-  }
-}
-
-Future<void> testHive() async {
-  final box = Hive.box<UserModel>('users');
-
-  // Signup (save user)
-  final user = UserModel(email: 'test@gmail.com', password: '123456');
-
-  await box.put(user.email, user);
-
-  // Login (read user)
-  final savedUser = box.get('test@gmail.com');
-
-  if (savedUser != null) {
-    debugPrint('LOGIN SUCCESS: ${savedUser.email}');
-  } else {
-    debugPrint('LOGIN FAILED');
   }
 }
