@@ -12,24 +12,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signup(User user) async {
-    // 1) API signup first
     await remoteDataSource.signup(email: user.email, password: user.password);
-
-    // 2) Save locally (Hive) for offline use
-    final userModel = UserModel(email: user.email, password: user.password);
-    await localDataSource.signup(userModel);
+    await localDataSource.signup(
+      UserModel(email: user.email, password: user.password),
+    );
   }
 
   @override
   Future<User?> login(String email, String password) async {
-    // 1) API login first
     await remoteDataSource.login(email: email, password: password);
 
-    // 2) Save locally (Hive)
-    final userModel = UserModel(email: email, password: password);
-    await localDataSource.signup(userModel);
+    final model = UserModel(email: email, password: password);
+    await localDataSource.signup(model);
 
-    // 3) Return domain entity
-    return userModel.toEntity();
+    return model.toEntity();
   }
 }

@@ -1,9 +1,5 @@
-import 'dart:async';
-import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/onboarding_page.dart';
-import 'package:blink_flutter/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,26 +15,13 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateNext();
   }
 
-  void _navigateNext() async {
-    // Wait 3 seconds for splash effect
+  Future<void> _navigateNext() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isLoggedIn = await authProvider.isLoggedIn();
-
-    if (isLoggedIn) {
-      // Go straight to Dashboard if user already logged in
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    } else {
-      // Otherwise go to Onboarding
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+    );
   }
 
   @override
@@ -48,13 +31,10 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App Logo
-            const Icon(Icons.favorite, size: 100, color: Colors.white),
-            const SizedBox(height: 20),
-
-            // App Name
-            const Text(
+          children: const [
+            Icon(Icons.favorite, size: 100, color: Colors.white),
+            SizedBox(height: 20),
+            Text(
               "Blink Dating",
               style: TextStyle(
                 fontSize: 32,

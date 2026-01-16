@@ -2,18 +2,30 @@ import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.da
 import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
     final contentWidth = screenWidth > 600 ? 450.0 : screenWidth * 0.9;
 
     return Scaffold(
@@ -28,6 +40,7 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
+
                   Text(
                     "WELCOME BACK\nTO\nBlink",
                     textAlign: TextAlign.center,
@@ -37,8 +50,10 @@ class LoginScreen extends StatelessWidget {
                       color: const Color(0xffB43AE6),
                     ),
                   ),
+
                   const SizedBox(height: 40),
 
+                  /// EMAIL
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -49,11 +64,22 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 5),
                   Container(
                     height: 48,
-                    color: Colors.grey.shade300,
-                    child: TextField(controller: emailController),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
                   ),
+
                   const SizedBox(height: 20),
 
+                  /// PASSWORD
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -64,10 +90,17 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 5),
                   Container(
                     height: 48,
-                    color: Colors.grey.shade300,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: TextField(
                       controller: passwordController,
                       obscureText: true,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
                     ),
                   ),
 
@@ -83,6 +116,8 @@ class LoginScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
+
+                  /// LOGIN BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -94,11 +129,6 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () async {
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
-
                         final email = emailController.text.trim();
                         final password = passwordController.text.trim();
 
@@ -111,22 +141,34 @@ class LoginScreen extends StatelessWidget {
                           return;
                         }
 
-                        final success = await authProvider.login(
-                          email,
-                          password,
-                        );
+                        try {
+                          final success = await context
+                              .read<AuthProvider>()
+                              .login(email, password);
 
-                        if (success) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const DashboardScreen(),
-                            ),
-                          );
-                        } else {
+                          if (!mounted) return;
+
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DashboardScreen(),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Invalid login credentials"),
+                              ),
+                            );
+                          }
+                        } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Invalid credentials"),
+                              content: Text(
+                                "Login failed.\nUse ReqRes test:\nemail: eve.holt@reqres.in\npassword: cityslicka",
+                              ),
+                              duration: Duration(seconds: 4),
                             ),
                           );
                         }
@@ -141,7 +183,22 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
 
+                  const SizedBox(height: 20),
+
+                  /// HELPER TEXT FOR REQRES
+                  Text(
+                    "Test login (ReqRes):\nemail: eve.holt@reqres.in\npassword: cityslicka",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      height: 1.3,
+                    ),
+                  ),
+
                   const SizedBox(height: 25),
+
+                  /// SIGN UP LINK
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -151,7 +208,7 @@ class LoginScreen extends StatelessWidget {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
+                              builder: (_) => const SignUpScreen(),
                             ),
                           );
                         },
@@ -165,6 +222,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 20),
                 ],
               ),

@@ -3,13 +3,19 @@ import 'api_constants.dart';
 
 class DioClient {
   static Dio create() {
-    return Dio(
+    final dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-        headers: {'Content-Type': 'application/json'},
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       ),
     );
+
+    print("🌐 DIO BASE URL: ${dio.options.baseUrl}");
+    return dio;
   }
 }

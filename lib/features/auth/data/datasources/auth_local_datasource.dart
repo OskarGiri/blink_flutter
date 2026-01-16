@@ -10,12 +10,10 @@ class AuthLocalDataSource {
   }
 
   UserModel? login(String email, String password) {
-    final stored = box.get(email);
-    if (stored != null && stored == password) {
+    final storedPassword = box.get(email);
+    if (storedPassword != null && storedPassword == password) {
       return UserModel(email: email, password: password);
     }
     return null;
   }
-
-  bool isLoggedIn() => box.isNotEmpty;
 }
