@@ -19,26 +19,13 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateNext();
   }
 
-  void _navigateNext() async {
-    // Wait 3 seconds for splash effect
+  Future<void> _navigateNext() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isLoggedIn = await authProvider.isLoggedIn();
-
-    if (isLoggedIn) {
-      // Go straight to Dashboard if user already logged in
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    } else {
-      // Otherwise go to Onboarding
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+    );
   }
 
   @override
