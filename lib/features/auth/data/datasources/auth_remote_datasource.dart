@@ -6,7 +6,7 @@ class AuthRemoteDataSource {
 
   Future<void> signup({required String email, required String password}) async {
     try {
-      print("🚀 SIGNUP -> https://reqres.in/api/register");
+      print(" SIGNUP -> https://reqres.in/api/register");
 
       final res = await dio.post(
         'https://reqres.in/api/register',
@@ -19,20 +19,20 @@ class AuthRemoteDataSource {
         ),
       );
 
-      print("✅ SIGNUP STATUS: ${res.statusCode}");
-      print("✅ SIGNUP DATA: ${res.data}");
+      print(" SIGNUP STATUS: ${res.statusCode}");
+      print(" SIGNUP DATA: ${res.data}");
     } on DioException catch (e) {
-      print("❌ DIO TYPE: ${e.type}");
-      print("❌ DIO MSG: ${e.message}");
-      print("❌ STATUS: ${e.response?.statusCode}");
-      print("❌ DATA: ${e.response?.data}");
+      print(" DIO TYPE: ${e.type}");
+      print(" DIO MSG: ${e.message}");
+      print(" DIO STATUS: ${e.response?.statusCode}");
+      print(" DIO DATA: ${e.response?.data}");
       rethrow;
     }
   }
 
   Future<void> login({required String email, required String password}) async {
     try {
-      print("🚀 LOGIN -> https://reqres.in/api/login");
+      print(" LOGIN -> https://reqres.in/api/login");
 
       final res = await dio.post(
         'https://reqres.in/api/login',
@@ -45,13 +45,13 @@ class AuthRemoteDataSource {
         ),
       );
 
-      print("✅ LOGIN STATUS: ${res.statusCode}");
-      print("✅ LOGIN DATA: ${res.data}");
+      print(" LOGIN STATUS: ${res.statusCode}");
+      print(" LOGIN DATA: ${res.data}");
     } on DioException catch (e) {
-      print("❌ DIO TYPE: ${e.type}");
-      print("❌ DIO MSG: ${e.message}");
-      print("❌ STATUS: ${e.response?.statusCode}");
-      print("❌ DATA: ${e.response?.data}");
+      print(" DIO TYPE: ${e.type}");
+      print(" DIO MSG: ${e.message}");
+      print(" DIO STATUS: ${e.response?.statusCode}");
+      print(" DIO DATA: ${e.response?.data}");
       rethrow;
     }
   }
