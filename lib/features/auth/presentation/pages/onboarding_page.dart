@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -40,10 +40,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // 👉 Go to Login Page
+      // 👉 Go to Signup Page
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(builder: (_) => const SignUpPage()),
       );
     }
   }

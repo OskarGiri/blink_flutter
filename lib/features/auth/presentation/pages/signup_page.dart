@@ -1,216 +1,205 @@
-// import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-// import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart';
+import 'login_page.dart';
 
-// class SignUpScreen extends StatefulWidget {
-//   const SignUpScreen({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
-//   @override
-//   State<SignUpScreen> createState() => _SignUpScreenState();
-// }
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
 
-// class _SignUpScreenState extends State<SignUpScreen> {
-//   final TextEditingController nameController = TextEditingController();
-//   final TextEditingController emailController = TextEditingController();
-//   final TextEditingController passwordController = TextEditingController();
+class _SignUpPageState extends State<SignUpPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-//   @override
-//   void dispose() {
-//     nameController.dispose();
-//     emailController.dispose();
-//     passwordController.dispose();
-//     super.dispose();
-//   }
+  bool _isSubmitting = false;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final size = MediaQuery.of(context).size;
-//     final double inputWidth = size.width * 0.85;
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       body: SafeArea(
-//         child: SingleChildScrollView(
-//           padding: const EdgeInsets.symmetric(horizontal: 20),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               SizedBox(height: size.height * 0.05),
+  Future<void> _handleSignup(BuildContext context) async {
+    if (_isSubmitting) return;
 
-//               Text(
-//                 "WELCOME\nTO\nBlink",
-//                 style: TextStyle(
-//                   fontSize: size.width * 0.085,
-//                   fontWeight: FontWeight.bold,
-//                   color: Colors.purple.shade700,
-//                 ),
-//               ),
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-//               SizedBox(height: size.height * 0.06),
+    if (username.isEmpty || email.isEmpty || password.isEmpty) {
+      _showSnack(context, "Please fill all fields");
+      return;
+    }
 
-//               /// FULL NAME (UI only)
-//               Text(
-//                 "Full Name",
-//                 style: TextStyle(color: Colors.purple.shade600),
-//               ),
-//               const SizedBox(height: 8),
-//               SizedBox(
-//                 width: inputWidth,
-//                 child: TextField(
-//                   controller: nameController,
-//                   decoration: _inputDecoration(),
-//                 ),
-//               ),
+    setState(() => _isSubmitting = true);
 
-//               const SizedBox(height: 20),
+    bool success;
+    try {
+      success = await context.read<AuthProvider>().signup(
+        username,
+        email,
+        password,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
 
-//               /// EMAIL
-//               Text(
-//                 "Your Email",
-//                 style: TextStyle(color: Colors.purple.shade600),
-//               ),
-//               const SizedBox(height: 8),
-//               SizedBox(
-//                 width: inputWidth,
-//                 child: TextField(
-//                   controller: emailController,
-//                   decoration: _inputDecoration(),
-//                   keyboardType: TextInputType.emailAddress,
-//                 ),
-//               ),
+    if (!mounted) return;
 
-//               const SizedBox(height: 20),
+    if (success) {
+      _showSnack(context, "Signup successful. Please login.");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } else {
+      _showSnack(context, "Signup failed. Please try again.");
+    }
+  }
 
-//               /// PASSWORD
-//               Text("Password", style: TextStyle(color: Colors.purple.shade600)),
-//               const SizedBox(height: 8),
-//               SizedBox(
-//                 width: inputWidth,
-//                 child: TextField(
-//                   controller: passwordController,
-//                   obscureText: true,
-//                   decoration: _inputDecoration(),
-//                 ),
-//               ),
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final inputWidth = size.width * 0.85;
 
-//               const SizedBox(height: 12),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: size.height * 0.05),
 
-//               /// Helper text for ReqRes test credentials
-//               Text(
-//                 "Test signup (ReqRes):\nemail: eve.holt@reqres.in\npassword: pistol",
-//                 style: TextStyle(
-//                   fontSize: 12,
-//                   color: Colors.grey.shade600,
-//                   height: 1.3,
-//                 ),
-//               ),
+              Text(
+                "WELCOME\nTO\nBlink",
+                style: TextStyle(
+                  fontSize: size.width * 0.085,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple.shade700,
+                ),
+              ),
 
-//               const SizedBox(height: 18),
+              SizedBox(height: size.height * 0.06),
 
-//               /// SIGN UP BUTTON
-//               SizedBox(
-//                 width: inputWidth,
-//                 height: 48,
-//                 child: ElevatedButton(
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: Colors.blueAccent,
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                   onPressed: () async {
-//                     final email = emailController.text.trim();
-//                     final password = passwordController.text.trim();
+              /// USERNAME
+              Text("Username", style: TextStyle(color: Colors.purple.shade600)),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: inputWidth,
+                child: TextField(
+                  controller: _usernameController,
+                  decoration: _inputDecoration(),
+                ),
+              ),
 
-//                     if (email.isEmpty || password.isEmpty) {
-//                       ScaffoldMessenger.of(context).showSnackBar(
-//                         const SnackBar(
-//                           content: Text("Please fill email and password"),
-//                         ),
-//                       );
-//                       return;
-//                     }
+              const SizedBox(height: 20),
 
-//                     try {
-//                       await context.read<AuthProvider>().signup(
-//                         email,
-//                         password,
-//                       );
+              /// EMAIL
+              Text("Email", style: TextStyle(color: Colors.purple.shade600)),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: inputWidth,
+                child: TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDecoration(),
+                ),
+              ),
 
-//                       if (!mounted) return;
+              const SizedBox(height: 20),
 
-//                       ScaffoldMessenger.of(context).showSnackBar(
-//                         const SnackBar(
-//                           content: Text("Signup successful! Please login."),
-//                         ),
-//                       );
+              /// PASSWORD
+              Text("Password", style: TextStyle(color: Colors.purple.shade600)),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: inputWidth,
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: _inputDecoration(),
+                ),
+              ),
 
-//                       Navigator.pushReplacement(
-//                         context,
-//                         MaterialPageRoute(builder: (_) => const LoginScreen()),
-//                       );
-//                     } catch (e) {
-//                       ScaffoldMessenger.of(context).showSnackBar(
-//                         const SnackBar(
-//                           content: Text(
-//                             "Signup failed.\nUse ReqRes test:\nemail: eve.holt@reqres.in\npassword: pistol",
-//                           ),
-//                           duration: Duration(seconds: 4),
-//                         ),
-//                       );
-//                     }
-//                   },
-//                   child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
-//                 ),
-//               ),
+              const SizedBox(height: 30),
 
-//               const SizedBox(height: 25),
+              /// SIGN UP BUTTON
+              SizedBox(
+                width: inputWidth,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () => _handleSignup(context),
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Sign Up", style: TextStyle(fontSize: 18)),
+                ),
+              ),
 
-//               /// LOGIN LINK
-//               Center(
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     const Text("Already have an account? "),
-//                     GestureDetector(
-//                       onTap: () {
-//                         Navigator.pushReplacement(
-//                           context,
-//                           MaterialPageRoute(
-//                             builder: (_) => const LoginScreen(),
-//                           ),
-//                         );
-//                       },
-//                       child: const Text(
-//                         "Login",
-//                         style: TextStyle(
-//                           color: Colors.blueAccent,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
+              const SizedBox(height: 25),
 
-//               SizedBox(height: size.height * 0.05),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
+              /// LOGIN LINK
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Already have an account? "),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                        );
+                      },
+                      child: const Text(
+                        "Login",
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-//   InputDecoration _inputDecoration() {
-//     return InputDecoration(
-//       filled: true,
-//       fillColor: Colors.grey.shade200,
-//       border: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(6),
-//         borderSide: BorderSide.none,
-//       ),
-//     );
-//   }
-// }
+              SizedBox(height: size.height * 0.05),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: Colors.grey.shade200,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}

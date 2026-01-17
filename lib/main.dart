@@ -21,14 +21,14 @@ void main() {
 
   // Use cases
   final loginUseCase = LoginUseCase(authRepository);
-  // final signupUseCase = SignupUser(authRepository);
+  final signupUseCase = SignupUser(authRepository);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
-            // signupUser: signupUseCase,
+            signupUser: signupUseCase,
             loginUseCase: loginUseCase,
           ),
         ),
