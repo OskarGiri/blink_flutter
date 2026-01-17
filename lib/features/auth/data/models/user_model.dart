@@ -1,5 +1,6 @@
+import 'package:blink_flutter/features/auth/domain/entities/auth_entity.dart';
 import 'package:hive/hive.dart';
-import '../../domain/entities/user.dart';
+
 
 part 'user_model.g.dart';
 
@@ -11,10 +12,14 @@ class UserModel extends HiveObject {
   @HiveField(1)
   final String password;
 
+  @HiveField(2)
+  final String username;
+
   UserModel({
     required this.email,
     required this.password,
+    required this.username,
   });
 
-  User toEntity() => User(email: email, password: password);
+  AuthEntity toEntity() => AuthEntity(email: email, password: password, username: username);
 }

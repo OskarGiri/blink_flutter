@@ -1,4 +1,6 @@
-import '../entities/user.dart';
+
+import 'package:blink_flutter/features/auth/data/models/user_model.dart';
+
 import '../repositories/auth_repository.dart';
 
 class SignupUser {
@@ -6,7 +8,7 @@ class SignupUser {
 
   SignupUser(this.repository);
 
-  Future<void> call(User user) async {
+  Future<void> call(UserModel user) async {
     await repository.signup(user);
   }
 }

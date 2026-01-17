@@ -6,13 +6,13 @@ class AuthLocalDataSource {
   AuthLocalDataSource(this.box);
 
   Future<void> signup(UserModel user) async {
-    await box.put(user.email, user.password);
+    await box.put(user.email, user.password, user.username);
   }
 
-  UserModel? login(String email, String password) {
+  UserModel? login(String email, String password, String username) {
     final storedPassword = box.get(email);
     if (storedPassword != null && storedPassword == password) {
-      return UserModel(email: email, password: password);
+      return UserModel(email: email, password: password, username: username);
     }
     return null;
   }

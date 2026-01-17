@@ -1,32 +1,58 @@
-import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+class _LoginPageState extends State<LoginPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogin(BuildContext context) async {
+    if (_isSubmitting) return;
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showSnack(context, "Please fill all fields");
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    final success = await context.read<AuthProvider>().login(email, password);
+
+    setState(() => _isSubmitting = false);
+
+    if (!mounted) return;
+
+    if (success) {
+      _showSnack(context, "Login successful");
+    } else {
+      _showSnack(context, "Invalid email or password");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth > 600 ? 450.0 : screenWidth * 0.9;
+    final contentWidth = screenWidth > 600 ? 420.0 : screenWidth * 0.9;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -35,17 +61,16 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             child: Container(
               width: contentWidth,
-              padding: const EdgeInsets.symmetric(vertical: 25),
+              padding: const EdgeInsets.symmetric(vertical: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
 
                   Text(
-                    "WELCOME BACK\nTO\nBlink",
-                    textAlign: TextAlign.center,
+                    "WELCOME BACK",
                     style: TextStyle(
-                      fontSize: screenWidth > 600 ? 36 : 30,
+                      fontSize: screenWidth > 600 ? 34 : 28,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xffB43AE6),
                     ),
@@ -57,25 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Your Email",
+                      "Email",
                       style: TextStyle(color: Color(0xffB43AE6)),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 6),
+                  _inputField(_emailController, false),
 
                   const SizedBox(height: 20),
 
@@ -87,140 +99,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Color(0xffB43AE6)),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 6),
+                  _inputField(_passwordController, true),
 
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        "Forget Password?",
-                        style: TextStyle(color: Colors.purple),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 30),
 
                   /// LOGIN BUTTON
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 48,
                     child: ElevatedButton(
+                      onPressed: () => _handleLogin(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () async {
-                        final email = emailController.text.trim();
-                        final password = passwordController.text.trim();
-
-                        if (email.isEmpty || password.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Please fill all fields"),
+                      child: _isSubmitting
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "Login",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
                             ),
-                          );
-                          return;
-                        }
-
-                        try {
-                          final success = await context
-                              .read<AuthProvider>()
-                              .login(email, password);
-
-                          if (!mounted) return;
-
-                          if (success) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const DashboardScreen(),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Invalid login credentials"),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Login failed.\nUse ReqRes test:\nemail: eve.holt@reqres.in\npassword: cityslicka",
-                              ),
-                              duration: Duration(seconds: 4),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
-                          fontSize: screenWidth > 600 ? 22 : 18,
-                          color: Colors.white,
-                        ),
-                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// HELPER TEXT FOR REQRES
-                  Text(
-                    "Test login (ReqRes):\nemail: eve.holt@reqres.in\npassword: cityslicka",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                      height: 1.3,
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  /// SIGN UP LINK
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don’t have an account? "),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SignUpScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Sign up",
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
 
                   const SizedBox(height: 20),
@@ -231,5 +136,29 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Widget _inputField(TextEditingController controller, bool obscure) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+        ),
+      ),
+    );
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
