@@ -1,41 +1,52 @@
+import 'package:blink_flutter/core/services/hive/hive_service.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/splash_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'features/auth/data/datasources/remote_data_source/auth_remote_data_source.dart';
-import 'features/auth/data/repositories/auth_remote_repository.dart';
-import 'features/auth/domain/usecases/login_user.dart';
-import 'features/auth/domain/usecases/signup_user.dart';
-import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/auth/presentation/pages/splash_page.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  // Dio instance
-  final dio = Dio();
-
-  // Remote data source
-  final authRemoteDataSource = AuthRemoteDataSource(dio);
-
-  // ✅ CORRECT repository
-  final authRepository = AuthRemoteRepository(authRemoteDataSource);
-
-  // Use cases
-  final loginUseCase = LoginUseCase(authRepository);
-  final signupUseCase = SignupUser(authRepository);
+  // Initialize the Hive Service;
+  await HiveService().init();
+  final sharedPreferences = await SharedPreferences.getInstance();
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            signupUser: signupUseCase,
-            loginUseCase: loginUseCase,
-          ),
-        ),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       ],
       child: const MyApp(),
     ),
   );
+
+  // // Dio instance
+  // final dio = Dio();
+
+  // // Remote data source
+  // final authRemoteDataSource = AuthRemoteDataSource(dio);
+
+  // // ✅ CORRECT repository
+  // final authRepository = AuthRemoteRepository(authRemoteDataSource);
+
+  // // Use cases
+  // final loginUseCase = LoginUseCase(authRepository);
+  // final signupUseCase = SignupUser(authRepository);
+
+  // runApp(
+  //   MultiProvider(
+  //     providers: [
+  //       ChangeNotifierProvider(
+  //         create: (_) => AuthProvider(
+  //           signupUser: signupUseCase,
+  //           loginUseCase: loginUseCase,
+  //         ),
+  //       ),
+  //     ],
+  //     child: const MyApp(),
+  //   ),
+  // );
 }
 
 class MyApp extends StatelessWidget {

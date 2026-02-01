@@ -1,37 +1,40 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_model.dart';
+part of 'user_hive_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class UserModelAdapter extends TypeAdapter<UserModel> {
+class UserHiveModelAdapter extends TypeAdapter<UserHiveModel> {
   @override
   final int typeId = 0;
 
   @override
-  UserModel read(BinaryReader reader) {
+  UserHiveModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return UserModel(
-      email: fields[0] as String,
-      password: fields[1] as String,
-      username: fields[2] as String,
+    return UserHiveModel(
+      userId: fields[0] as String?,
+      email: fields[1] as String,
+      password: fields[2] as String?,
+      username: fields[3] as String,
     );
   }
 
   @override
-  void write(BinaryWriter writer, UserModel obj) {
+  void write(BinaryWriter writer, UserHiveModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.email)
+      ..write(obj.userId)
       ..writeByte(1)
-      ..write(obj.password)
+      ..write(obj.email)
       ..writeByte(2)
+      ..write(obj.password)
+      ..writeByte(3)
       ..write(obj.username);
   }
 
@@ -41,7 +44,7 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserModelAdapter &&
+      other is UserHiveModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,20 +1,19 @@
+import 'package:blink_flutter/features/auth/presentation/state/auth_state.dart';
+import 'package:blink_flutter/features/auth/presentation/view_moodel/auth_view_model.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/auth_provider.dart';
-
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final _loginFormKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -23,34 +22,53 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _handleLogin(BuildContext context) async {
-    if (_isSubmitting) return;
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      _showSnack(context, "Please fill all fields");
-      return;
+  Future<void> _handleLogin() async {
+    if (_loginFormKey.currentState!.validate()) {
+      await ref
+          .read(authViewModelProvider.notifier)
+          .login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
+    // if (_isSubmitting) return;
 
-    setState(() => _isSubmitting = true);
+    // final email = _emailController.text.trim();
+    // final password = _passwordController.text.trim();
 
-    final success = await context.read<AuthProvider>().login(email, password);
+    // if (email.isEmpty || password.isEmpty) {
+    //   _showSnack(context, "Please fill all fields");
+    //   return;
+    // }
 
-    setState(() => _isSubmitting = false);
+    // setState(() => _isSubmitting = true);
 
-    if (!mounted) return;
+    // final success = await context.read<AuthProvider>().login(email, password);
 
-    if (success) {
-      _showSnack(context, "Login successful");
-    } else {
-      _showSnack(context, "Invalid email or password");
-    }
+    // setState(() => _isSubmitting = false);
+
+    // if (!mounted) return;
+
+    // if (success) {
+    //   _showSnack(context, "Login successful");
+    // } else {
+    //   _showSnack(context, "Invalid email or password");
+    // }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.error) {
+        _showSnack(context, next.message ?? 'Login failed. An error occurred');
+      } else if (next.status == AuthStatus.authenticated) {
+        _showSnack(context, 'Login successful.');
+        // Navigate to home or another page after successful login
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = screenWidth > 600 ? 420.0 : screenWidth * 0.9;
 
@@ -62,74 +80,79 @@ class _LoginPageState extends State<LoginPage> {
             child: Container(
               width: contentWidth,
               padding: const EdgeInsets.symmetric(vertical: 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
+              child: Form(
+                key: _loginFormKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
 
-                  Text(
-                    "WELCOME BACK",
-                    style: TextStyle(
-                      fontSize: screenWidth > 600 ? 34 : 28,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xffB43AE6),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  /// EMAIL
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Email",
-                      style: TextStyle(color: Color(0xffB43AE6)),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _inputField(_emailController, false),
-
-                  const SizedBox(height: 20),
-
-                  /// PASSWORD
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Password",
-                      style: TextStyle(color: Color(0xffB43AE6)),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _inputField(_passwordController, true),
-
-                  const SizedBox(height: 30),
-
-                  /// LOGIN BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => _handleLogin(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    Text(
+                      "WELCOME BACK",
+                      style: TextStyle(
+                        fontSize: screenWidth > 600 ? 34 : 28,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xffB43AE6),
                       ),
-                      child: _isSubmitting
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "Login",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
-                            ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 40),
+
+                    /// EMAIL
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Email",
+                        style: TextStyle(color: Color(0xffB43AE6)),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _inputField(_emailController, false),
+
+                    const SizedBox(height: 20),
+
+                    /// PASSWORD
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Password",
+                        style: TextStyle(color: Color(0xffB43AE6)),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _inputField(_passwordController, true),
+
+                    const SizedBox(height: 30),
+
+                    /// LOGIN BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: authState.status == AuthStatus.loading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "Login",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
           ),
@@ -145,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         obscureText: obscure,
         decoration: const InputDecoration(

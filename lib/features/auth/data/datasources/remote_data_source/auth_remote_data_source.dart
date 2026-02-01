@@ -1,18 +1,40 @@
-import 'package:blink_flutter/core/constants/api_endpoints.dart';
+import 'package:blink_flutter/core/api/api_client.dart';
+import 'package:blink_flutter/core/api/api_endpoints.dart';
+import 'package:blink_flutter/core/services/storage/token_service.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/data/datasources/auth_data_source.dart';
+import 'package:blink_flutter/features/auth/data/models/auth_api_model.dart';
 import 'package:blink_flutter/features/auth/domain/entities/auth_entity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Create provider
+final authRemoteDatasourceProvider = Provider<IAuthDataSource>((ref) {
+  return AuthRemoteDataSource(
+    apiClient: ref.read(apiClientProvider),
+    userSessionService: ref.read(userSessionServiceProvider),
+    tokenService: ref.read(tokenServiceProvider),
+  );
+});
 
 class AuthRemoteDataSource implements IAuthDataSource {
-  final Dio _dio;
+  final ApiClient _apiClient;
+  final UserSessionService _userSessionService;
+  final TokenService _tokenService;
 
-  AuthRemoteDataSource(this._dio);
+  AuthRemoteDataSource({
+    required ApiClient apiClient,
+    required UserSessionService userSessionService,
+    required TokenService tokenService,
+  }) : _apiClient = apiClient,
+       _userSessionService = userSessionService,
+       _tokenService = tokenService;
 
   @override
-  Future<String> loginUser(String email, String password) async {
+  Future<AuthApiModel?> loginUser(String email, String password) async {
     try {
-      final response = await _dio.post(
+      final response = await _apiClient.post(
         ApiEndpoints.login,
         data: {"email": email, "password": password},
       );
@@ -26,14 +48,21 @@ class AuthRemoteDataSource implements IAuthDataSource {
         }
 
         final String token = data['token'];
+        final userData = data['user'];
 
-        // Optional: debug user info
-        final user = data['user'];
-        debugPrint("Login successful");
-        debugPrint("User ID: ${user?['id']}");
-        debugPrint("User Email: ${user?['email']}");
+        // Save token
+        await _tokenService.saveToken(token);
 
-        return token;
+        // Parse user data into AuthApiModel
+        if (userData != null) {
+          final user = AuthApiModel.fromJson(userData);
+          debugPrint("Login successful");
+          debugPrint("User ID: ${user.userId}");
+          debugPrint("User Email: ${user.email}");
+          return user;
+        }
+
+        return null;
       } else {
         throw Exception(response.data?['message'] ?? 'Login failed');
       }
@@ -56,7 +85,7 @@ class AuthRemoteDataSource implements IAuthDataSource {
   @override
   Future<void> registerUser(AuthEntity user) async {
     try {
-      final response = await _dio.post(
+      final response = await _apiClient.post(
         ApiEndpoints.register,
         data: {
           "username": user.username,

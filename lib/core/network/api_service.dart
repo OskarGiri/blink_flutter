@@ -1,4 +1,4 @@
-import 'package:blink_flutter/core/constants/api_endpoints.dart';
+import 'package:blink_flutter/core/api/api_endpoints.dart';
 import 'package:blink_flutter/core/network/dio_error_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
