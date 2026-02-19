@@ -63,7 +63,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 12, top: 6),
                 child: TextButton(
-                  onPressed: () {}, // Disabled for now
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignUpPage()),
+                    );
+                  },
                   child: const Text(
                     "Skip",
                     style: TextStyle(color: Colors.black87),

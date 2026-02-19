@@ -11,6 +11,11 @@ abstract class IAuthLocalDataSource {
 
 abstract class IAuthDataSource {
   Future<AuthApiModel?> loginUser(String email, String password);
-
-  Future<void> registerUser(AuthEntity user);
+  
+  // ✅ UPDATED: Returns AuthApiModel instead of void
+  Future<AuthApiModel?> registerUser({
+    required String username,
+    required String email,
+    required String password,
+  });
 }

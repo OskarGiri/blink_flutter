@@ -6,37 +6,38 @@ part 'auth_api_model.g.dart';
 
 @JsonSerializable()
 class AuthApiModel extends Equatable {
-  @JsonKey(name: '_id')
+  @JsonKey(name: 'id')
   final String? userId;
+
+  @JsonKey(name: 'name')
   final String username;
+
   final String email;
-  final String password;
+
+  @JsonKey(includeIfNull: false) // ✅ FIX: Optional password
+  final String? password; // ✅ FIX: Make nullable
 
   const AuthApiModel({
     this.userId,
     required this.username,
     required this.email,
-    required this.password,
+    this.password, // ✅ Optional
   });
 
-  /// FROM JSON (API → Model)
   factory AuthApiModel.fromJson(Map<String, dynamic> json) =>
       _$AuthApiModelFromJson(json);
 
-  /// TO JSON (Model → API)
   Map<String, dynamic> toJson() => _$AuthApiModelToJson(this);
 
-  /// MODEL → DOMAIN ENTITY
   AuthEntity toEntity() {
     return AuthEntity(
-      userId: userId,
+      userId: userId ?? '',
       username: username,
       email: email,
-      password: password,
+      password: password ?? '', // ✅ Safe default
     );
   }
 
-  /// DOMAIN ENTITY → MODEL
   factory AuthApiModel.fromEntity(AuthEntity entity) {
     return AuthApiModel(
       userId: entity.userId,

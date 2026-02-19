@@ -10,6 +10,7 @@ import 'package:blink_flutter/features/auth/domain/entities/user_entity.dart';
 import 'package:blink_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
@@ -90,8 +91,51 @@ class AuthRepository implements IAuthRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, UserEntity>> signUp(UserEntity userEntity) async {
+ @override
+Future<Either<Failure, UserEntity>> signUp(UserEntity userEntity) async {
+  debugPrint("🔥 === SIGNUP STARTED ===");
+  final isOnline = await _networkInfo.isConnected;
+  debugPrint("🌐 Network: ${isOnline ? 'ONLINE' : 'OFFLINE'}");
+  
+  if (isOnline) {
+    debugPrint("🚀 CALLING API registerUser...");
+    try {
+      final apiModel = await _authRemoteDataSource.registerUser(
+
+          username: userEntity.username ?? '',
+          email: userEntity.email,
+          password: userEntity.password ?? '',
+        );
+
+        if (apiModel == null) {
+          return const Left(ApiFailure(message: "Sign up failed"));
+        }
+
+        // Cache the user locally after successful API signup
+        final authEntity = apiModel.toEntity();
+        final cachedUserEntity = UserEntity(
+          userId: authEntity.userId,
+          username: authEntity.username,
+          email: authEntity.email,
+          password: authEntity.password,
+        );
+        final userModel = UserHiveModel.fromEntity(cachedUserEntity);
+        await _authLocalDataSource.createUser(userModel);
+
+        return Right(cachedUserEntity);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? 'Sign up failed',
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    }
+
+    // Offline - Use Hive only
     try {
       final userModel = UserHiveModel.fromEntity(userEntity);
 
@@ -100,7 +144,7 @@ class AuthRepository implements IAuthRepository {
         userEntity.email,
       );
       if (existingUserByEmail != null) {
-        return Left(LocalDatabaseFailure(message: 'Email already in exists'));
+        return Left(LocalDatabaseFailure(message: 'Email already exists'));
       }
 
       final hashedPassword = BCrypt.hashpw(
@@ -109,11 +153,7 @@ class AuthRepository implements IAuthRepository {
       );
 
       final createdUserModel = await _authLocalDataSource.createUser(
-        userModel.copyWith(
-          username: userModel.username,
-          email: userModel.email,
-          password: hashedPassword,
-        ),
+        userModel.copyWith(password: hashedPassword),
       );
 
       if (createdUserModel == null) {
