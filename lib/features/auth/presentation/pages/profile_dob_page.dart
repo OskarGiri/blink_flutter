@@ -1,5 +1,7 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/profile_lookingfor_page.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/profile_gender_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,158 +13,134 @@ class ProfileDobPage extends ConsumerStatefulWidget {
 }
 
 class _ProfileDobPageState extends ConsumerState<ProfileDobPage> {
-  static const String _userKey = "guest";
+  DateTime? _dob;
+  bool _loading = false;
 
-  DateTime? _selectedDate;
+  String _userKey(WidgetRef ref) {
+    final session = ref.read(userSessionServiceProvider);
+    return session.getCurrentUserId() ?? "guest";
+  }
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadSavedDob);
+    Future.microtask(_loadExisting);
   }
 
-  Future<void> _loadSavedDob() async {
-    final hiveService = ref.read(hiveServiceProvider);
-    final profile = await hiveService.getProfileByUserId(_userKey);
+  Future<void> _loadExisting() async {
+    final hive = ref.read(hiveServiceProvider);
+    final profile = await hive.getProfileByUserId(_userKey(ref));
+    final dobStr = profile?.dob;
 
-    if (profile?.dob != null) {
-      setState(() {
-        _selectedDate = DateTime.tryParse(profile!.dob!);
-      });
+    if (dobStr != null && dobStr.toString().trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(dobStr.toString());
+      if (parsed != null) setState(() => _dob = parsed);
     }
   }
 
-  Future<void> _pickDate() async {
+  int _calculateAge(DateTime dob) {
     final now = DateTime.now();
-    final lastAllowed = DateTime(now.year - 18, now.month, now.day);
-    final initial = _selectedDate ?? lastAllowed;
+    int age = now.year - dob.year;
+
+    // If birthday hasn't happened yet this year, subtract 1
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+
+    // ✅ Prevent selecting dates that make user under 18
+    final maxDob = DateTime(now.year - 18, now.month, now.day);
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: _dob ?? DateTime(now.year - 20, now.month, now.day),
       firstDate: DateTime(1900),
-      lastDate: lastAllowed, // ✅ cannot pick under 18
+      lastDate: maxDob, // ✅ Under-18 cannot be picked
     );
 
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _dob = picked);
   }
 
-  String _format(DateTime d) {
-    final y = d.year.toString().padLeft(4, '0');
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return "$y-$m-$day";
-  }
-
-  Future<void> _saveAndContinue() async {
-    if (_selectedDate == null) {
+  Future<void> _saveAndNext() async {
+    if (_dob == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select your date of birth")),
+        const SnackBar(content: Text("Please select date of birth")),
       );
       return;
     }
 
-    final now = DateTime.now();
-    final lastAllowed = DateTime(now.year - 18, now.month, now.day);
-
-    if (_selectedDate!.isAfter(lastAllowed)) {
+    // ✅ 18+ check (extra safety even though picker restricts it)
+    final age = _calculateAge(_dob!);
+    if (age < 18) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You must be at least 18 years old")),
+        const SnackBar(content: Text("You must be 18+ to use this app.")),
       );
       return;
     }
 
-    final hiveService = ref.read(hiveServiceProvider);
-    final old = await hiveService.getProfileByUserId(_userKey);
+    setState(() => _loading = true);
+    try {
+      final hive = ref.read(hiveServiceProvider);
+      final existing = await hive.getProfileByUserId(_userKey(ref));
 
-    if (old == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Profile not found. Please start from name page."),
-        ),
+      // fullName is required in your ProfileHiveModel
+      final fullName = (existing?.fullName ?? "").trim();
+      if (fullName.isEmpty) {
+        if (!mounted) return;
+        Navigator.pop(context); // go back to Full Name page
+        return;
+      }
+
+      final updated = ProfileHiveModel(
+        userId: _userKey(ref),
+        fullName: fullName,
+        dob: _dob!.toIso8601String(),
+        gender: existing?.gender,
+        lookingFor: existing?.lookingFor,
+        pendingSync: true,
       );
-      return;
+
+      await hive.saveProfile(updated);
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileGenderPage()),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-
-    final updated = old.copyWith(
-      dob: _format(_selectedDate!),
-      pendingSync: true,
-    );
-    await hiveService.saveProfile(updated);
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("DOB saved locally (Hive) ✅")));
-
-    // Next step later: Looking For page
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile Setup"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Date of Birth")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "My birthday is",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _dob == null
+                        ? "No date selected"
+                        : _dob!.toLocal().toString().split(' ').first,
+                  ),
+                ),
+                TextButton(onPressed: _pickDob, child: const Text("Pick")),
+              ],
             ),
-            const SizedBox(height: 12),
-
-            InkWell(
-              onTap: _pickDate,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black26),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _selectedDate == null
-                      ? "Select date"
-                      : _format(_selectedDate!),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await _saveAndContinue();
-                  if (!mounted) return;
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ProfileLookingForPage(),
-                    ),
-                  );
-                },
-
-                child: const Text("Continue"),
-              ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loading ? null : _saveAndNext,
+              child: Text(_loading ? "Saving..." : "Next"),
             ),
           ],
         ),

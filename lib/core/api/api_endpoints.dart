@@ -10,4 +10,6 @@ class ApiEndpoints {
   // ====================== Auth Routes ======================
   static const String login = "$baseUrl/users/login";
   static const String register = "$baseUrl/users/signup";
+  static const String getMe = "/users/me";
+  static const String updateMe = "/users/me";
 }

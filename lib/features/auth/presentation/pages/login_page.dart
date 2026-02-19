@@ -1,3 +1,4 @@
+import 'package:blink_flutter/features/auth/presentation/pages/profile_fullname_page.dart';
 import 'package:blink_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:blink_flutter/features/auth/presentation/view_moodel/auth_view_model.dart';
 import 'package:flutter/material.dart';
@@ -31,29 +32,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             password: _passwordController.text.trim(),
           );
     }
-    // if (_isSubmitting) return;
-
-    // final email = _emailController.text.trim();
-    // final password = _passwordController.text.trim();
-
-    // if (email.isEmpty || password.isEmpty) {
-    //   _showSnack(context, "Please fill all fields");
-    //   return;
-    // }
-
-    // setState(() => _isSubmitting = true);
-
-    // final success = await context.read<AuthProvider>().login(email, password);
-
-    // setState(() => _isSubmitting = false);
-
-    // if (!mounted) return;
-
-    // if (success) {
-    //   _showSnack(context, "Login successful");
-    // } else {
-    //   _showSnack(context, "Invalid email or password");
-    // }
   }
 
   @override
@@ -63,9 +41,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error) {
         _showSnack(context, next.message ?? 'Login failed. An error occurred');
-      } else if (next.status == AuthStatus.authenticated) {
+      } else if (previous?.status != AuthStatus.authenticated &&
+          next.status == AuthStatus.authenticated) {
         _showSnack(context, 'Login successful.');
-        // Navigate to home or another page after successful login
+
+        // ✅ Go directly to Profile setup (no restart needed)
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileFullNamePage()),
+        );
       }
     });
 

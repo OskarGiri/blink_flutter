@@ -1,4 +1,7 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,102 +14,104 @@ class ProfileLookingForPage extends ConsumerStatefulWidget {
 }
 
 class _ProfileLookingForPageState extends ConsumerState<ProfileLookingForPage> {
-  static const String _userKey = "guest";
+  String? _lookingFor;
+  bool _loading = false;
 
-  String? _selected;
-
-  final List<Map<String, String>> _options = const [
-    {"key": "long_term", "label": "Long-term relationship"},
-    {"key": "short_term", "label": "Short-term relationship"},
-    {"key": "friendship", "label": "Friendship"},
-    {"key": "figuring_out", "label": "Still figuring it out"},
-  ];
+  String _userKey(WidgetRef ref) {
+    final session = ref.read(userSessionServiceProvider);
+    return session.getCurrentUserId() ?? "guest";
+  }
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadSaved);
+    Future.microtask(_loadExisting);
   }
 
-  Future<void> _loadSaved() async {
-    final hiveService = ref.read(hiveServiceProvider);
-    final profile = await hiveService.getProfileByUserId(_userKey);
-    if (profile?.lookingFor != null) {
-      setState(() => _selected = profile!.lookingFor);
+  Future<void> _loadExisting() async {
+    final hive = ref.read(hiveServiceProvider);
+    final profile = await hive.getProfileByUserId(_userKey(ref));
+    final lf = profile?.lookingFor;
+
+    if (lf != null && lf.toString().trim().isNotEmpty) {
+      setState(() => _lookingFor = lf.toString());
     }
   }
 
-  Future<void> _saveAndContinue() async {
-    if (_selected == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select one option")));
-      return;
-    }
-
-    final hiveService = ref.read(hiveServiceProvider);
-    final old = await hiveService.getProfileByUserId(_userKey);
-
-    if (old == null) {
+  Future<void> _saveAndFinish() async {
+    final lookingFor = (_lookingFor ?? "").trim();
+    if (lookingFor.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Profile not found. Please start from name page."),
-        ),
+        const SnackBar(content: Text("Please choose looking for")),
       );
       return;
     }
 
-    final updated = old.copyWith(lookingFor: _selected, pendingSync: true);
-    await hiveService.saveProfile(updated);
+    setState(() => _loading = true);
+    try {
+      final hive = ref.read(hiveServiceProvider);
+      final existing = await hive.getProfileByUserId(_userKey(ref));
 
-    if (!mounted) return;
+      final fullName = (existing?.fullName ?? "").trim();
+      if (fullName.isEmpty) {
+        if (!mounted) return;
+        Navigator.pop(context);
+        return;
+      }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Saved locally (Hive) ✅")));
+      final updated = ProfileHiveModel(
+        userId: _userKey(ref),
+        fullName: fullName,
+        dob: existing?.dob,
+        gender: existing?.gender,
+        lookingFor: lookingFor,
+        pendingSync: true,
+      );
 
-    // Next step: Interests page (Step 2.7)
+      await hive.saveProfile(updated);
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+
+      // Later we will route to Discovery, but dashboard is fine for Step 1 completion.
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile Setup"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Looking For")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "I am looking for",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            RadioListTile<String>(
+              value: "men",
+              groupValue: _lookingFor,
+              title: const Text("Men"),
+              onChanged: (v) => setState(() => _lookingFor = v),
             ),
-            const SizedBox(height: 12),
-
-            ..._options.map((o) {
-              return RadioListTile<String>(
-                title: Text(o["label"]!),
-                value: o["key"]!,
-                groupValue: _selected,
-                onChanged: (v) => setState(() => _selected = v),
-              );
-            }),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _saveAndContinue,
-                child: const Text("Continue"),
-              ),
+            RadioListTile<String>(
+              value: "women",
+              groupValue: _lookingFor,
+              title: const Text("Women"),
+              onChanged: (v) => setState(() => _lookingFor = v),
+            ),
+            RadioListTile<String>(
+              value: "everyone",
+              groupValue: _lookingFor,
+              title: const Text("Everyone"),
+              onChanged: (v) => setState(() => _lookingFor = v),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loading ? null : _saveAndFinish,
+              child: Text(_loading ? "Saving..." : "Finish"),
             ),
           ],
         ),

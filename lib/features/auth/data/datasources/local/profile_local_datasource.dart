@@ -1,3 +1,4 @@
+import 'package:blink_flutter/core/constants/hive_table_constant.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,7 @@ final profileLocalDatasourceProvider = Provider<ProfileLocalDatasource>((ref) {
 });
 
 class ProfileLocalDatasource {
-  static const String _boxName = "profileBox";
+ static const String _boxName = HiveTableConstant.profileTable;
 
   Future<Box<ProfileHiveModel>> _openBox() async {
     return Hive.openBox<ProfileHiveModel>(_boxName);
