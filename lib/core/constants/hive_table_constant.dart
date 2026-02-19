@@ -1,11 +1,14 @@
 class HiveTableConstant {
   HiveTableConstant._();
 
-  static const String dbName = 'blink';
-  
-  static const int usersTypeId = 0;
-  static const String usersTable = 'users_table';
+  static const String dbName = "blink_db";
 
-  static const int pendingEmailsTableId = 1;
-  static const String pendingEmailsTable = 'pending_emails_table';
+  // ====================== Users ======================
+  static const int usersTypeId = 0;
+  static const String usersTable = "usersTable";
+
+  // ====================== Profile ======================
+  // ✅ NEW
+  static const int profileTypeId = 10;
+  static const String profileTable = "profileTable";
 }
