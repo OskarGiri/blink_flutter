@@ -1,5 +1,6 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/profile_fullname_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/splash_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,6 @@ void main() async {
   // Initialize the Hive Service;
   await HiveService().init();
   final sharedPreferences = await SharedPreferences.getInstance();
-  
 
   runApp(
     ProviderScope(
@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Blink App',
-      home: SplashScreen(),
+      home: ProfileFullNamePage(),
     );
   }
 }

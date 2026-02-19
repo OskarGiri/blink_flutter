@@ -19,19 +19,28 @@ class ProfileHiveModelAdapter extends TypeAdapter<ProfileHiveModel> {
     return ProfileHiveModel(
       userId: fields[0] as String,
       fullName: fields[1] as String,
-      pendingSync: fields[2] as bool,
+      gender: fields[2] as String?,
+      dob: fields[3] as String?,
+      lookingFor: fields[4] as String?,
+      pendingSync: fields[5] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ProfileHiveModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.userId)
       ..writeByte(1)
       ..write(obj.fullName)
       ..writeByte(2)
+      ..write(obj.gender)
+      ..writeByte(3)
+      ..write(obj.dob)
+      ..writeByte(4)
+      ..write(obj.lookingFor)
+      ..writeByte(5)
       ..write(obj.pendingSync);
   }
 

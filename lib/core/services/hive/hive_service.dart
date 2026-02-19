@@ -1,8 +1,7 @@
 // lib/core/services/hive/hive_service.dart
 import 'package:blink_flutter/core/constants/hive_table_constant.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
-import 'package:blink_flutter/features/auth/data/models/user_hive_model.dart';
-import 'package:blink_flutter/features/profile/data/models/profile_hive_model.dart'; // ✅ NEW
+import 'package:blink_flutter/features/auth/data/models/user_hive_model.dart';// ✅ NEW
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
