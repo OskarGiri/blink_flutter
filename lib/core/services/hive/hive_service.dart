@@ -1,7 +1,9 @@
 // lib/core/services/hive/hive_service.dart
+import 'dart:convert';
+
 import 'package:blink_flutter/core/constants/hive_table_constant.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
-import 'package:blink_flutter/features/auth/data/models/user_hive_model.dart';// ✅ NEW
+import 'package:blink_flutter/features/auth/data/models/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,7 +13,7 @@ final hiveServiceProvider = Provider<HiveService>((ref) {
 });
 
 class HiveService {
-  // Initialize Hive
+  // ========================= Init =========================
   Future<void> init() async {
     final directory = await getApplicationDocumentsDirectory();
     final path = "${directory.path}/${HiveTableConstant.dbName}";
@@ -21,44 +23,38 @@ class HiveService {
     await _openBoxes();
   }
 
-  // Register all adapters
   void _registerAdapters() {
     if (!Hive.isAdapterRegistered(HiveTableConstant.usersTypeId)) {
       Hive.registerAdapter(UserHiveModelAdapter());
     }
 
-    // ✅ NEW Profile Adapter
     if (!Hive.isAdapterRegistered(HiveTableConstant.profileTypeId)) {
       Hive.registerAdapter(ProfileHiveModelAdapter());
     }
   }
 
-  // Open all boxes
   Future<void> _openBoxes() async {
     await Hive.openBox<UserHiveModel>(HiveTableConstant.usersTable);
-
-    // ✅ NEW Profile Box
     await Hive.openBox<ProfileHiveModel>(HiveTableConstant.profileTable);
+
+    // ✅ NEW: discovery cache (String box)
+    await Hive.openBox<String>(HiveTableConstant.discoveryCacheBox);
   }
 
-  // Close all boxes
   Future<void> closeBoxes() async {
     await Hive.close();
   }
 
-  // The box file is deleted. Need to open the box again to use it.
   Future<void> deleteEntireBox() async {
     var box = await Hive.openBox('myBox');
     await box.deleteFromDisk();
   }
 
-  // All Hive data associated with the application is removed.
   Future<void> deleteAllDatabases() async {
     await Hive.deleteFromDisk();
   }
 
-  // ========================= CRUD Operations ========================
-  // ---------------------------- Users ------------------------------
+  // ========================= Users CRUD =========================
   Box<UserHiveModel> get _usersBox =>
       Hive.box<UserHiveModel>(HiveTableConstant.usersTable);
 
@@ -93,8 +89,7 @@ class HiveService {
     await _usersBox.clear();
   }
 
-  // ---------------------------- Profile ------------------------------
-  // ✅ NEW Profile CRUD (minimal for Step 2.1)
+  // ========================= Profile CRUD =========================
   Box<ProfileHiveModel> get _profileBox =>
       Hive.box<ProfileHiveModel>(HiveTableConstant.profileTable);
 
@@ -109,5 +104,28 @@ class HiveService {
 
   Future<void> clearProfileBox() async {
     await _profileBox.clear();
+  }
+
+  // ========================= Discovery Cache (OFFLINE) =========================
+  Box<String> get _discoveryBox =>
+      Hive.box<String>(HiveTableConstant.discoveryCacheBox);
+
+  /// Saves the discovery list for a user as JSON string.
+  /// Store raw API list directly (List<dynamic>).
+  Future<void> saveDiscoveryCache(String userId, List<dynamic> jsonList) async {
+    await _discoveryBox.put("discovery_$userId", jsonEncode(jsonList));
+  }
+
+  /// Loads the cached discovery list. Returns [] if empty.
+  Future<List<dynamic>> getDiscoveryCache(String userId) async {
+    final raw = _discoveryBox.get("discovery_$userId");
+    if (raw == null || raw.isEmpty) return [];
+
+    final decoded = jsonDecode(raw);
+    return decoded is List ? decoded : [];
+  }
+
+  Future<void> clearDiscoveryCache(String userId) async {
+    await _discoveryBox.delete("discovery_$userId");
   }
 }

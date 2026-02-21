@@ -1,7 +1,8 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
+// import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/profile_photos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -73,7 +74,7 @@ class _ProfileLookingForPageState extends ConsumerState<ProfileLookingForPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const ProfilePhotosPage()),
       );
 
       // Later we will route to Discovery, but dashboard is fine for Step 1 completion.

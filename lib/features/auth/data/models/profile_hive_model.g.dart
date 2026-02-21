@@ -23,13 +23,14 @@ class ProfileHiveModelAdapter extends TypeAdapter<ProfileHiveModel> {
       dob: fields[3] as String?,
       lookingFor: fields[4] as String?,
       pendingSync: fields[5] as bool,
+      photos: (fields[6] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ProfileHiveModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.userId)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class ProfileHiveModelAdapter extends TypeAdapter<ProfileHiveModel> {
       ..writeByte(4)
       ..write(obj.lookingFor)
       ..writeByte(5)
-      ..write(obj.pendingSync);
+      ..write(obj.pendingSync)
+      ..writeByte(6)
+      ..write(obj.photos);
   }
 
   @override

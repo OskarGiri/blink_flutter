@@ -1,10 +1,11 @@
+// lib/features/auth/presentation/pages/splash_page.dart
 import 'package:blink_flutter/core/services/connectivity/network_info.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/token_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/data/datasources/profile_remote_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/dashboard_shell.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_fullname_page.dart';
 import 'package:flutter/material.dart';
@@ -24,16 +25,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     Future.microtask(_route);
   }
 
-  bool _isProfileComplete(dynamic profile) {
+  bool _isProfileComplete(ProfileHiveModel? profile) {
     final fullName = (profile?.fullName ?? '').toString().trim();
     final gender = (profile?.gender ?? '').toString().trim();
     final dob = (profile?.dob ?? '').toString().trim();
     final lookingFor = (profile?.lookingFor ?? '').toString().trim();
+    final photos = profile?.photos ?? const <String>[];
 
     return fullName.isNotEmpty &&
         gender.isNotEmpty &&
         dob.isNotEmpty &&
-        lookingFor.isNotEmpty;
+        lookingFor.isNotEmpty &&
+        photos.isNotEmpty;
   }
 
   Future<void> _route() async {
@@ -48,7 +51,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final token = await tokenService.getToken();
     final isLoggedInOffline = session.isLoggedIn();
 
-    // Not logged in
     if (token == null && !isLoggedInOffline) {
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -60,21 +62,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     final userId = session.getCurrentUserId() ?? "guest";
 
-    // ✅ ONLINE: fetch /users/me and cache to Hive
     final connected = await network.isConnected;
     if (connected) {
       try {
-        final data = await remote.getMe(); // expects Map<String, dynamic>
-
+        final data = await remote.getMe();
         final cached = await hive.getProfileByUserId(userId);
+
+        final photos = (data["photos"] is List)
+            ? (data["photos"] as List).map((e) => e.toString()).toList()
+            : (cached?.photos ?? const <String>[]);
 
         final updated = ProfileHiveModel(
           userId: userId,
           fullName: (data["fullName"] ?? cached?.fullName ?? "").toString(),
           dob: (data["dob"] ?? cached?.dob ?? "").toString(),
           gender: (data["gender"] ?? cached?.gender ?? "").toString(),
-          lookingFor:
-              (data["lookingFor"] ?? cached?.lookingFor ?? "").toString(),
+          lookingFor: (data["lookingFor"] ?? cached?.lookingFor ?? "")
+              .toString(),
+          photos: photos,
           pendingSync: false,
         );
 
@@ -84,23 +89,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
     }
 
-    // OFFLINE (or after caching): read from Hive
     final profile = await hive.getProfileByUserId(userId);
     final complete = _isProfileComplete(profile);
 
     if (!mounted) return;
 
-    if (!complete) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfileFullNamePage()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            complete ? const DashboardShell() : const ProfileFullNamePage(),
+      ),
+    );
   }
 
   @override

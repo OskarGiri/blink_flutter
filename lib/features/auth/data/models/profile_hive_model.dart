@@ -16,12 +16,15 @@ class ProfileHiveModel extends HiveObject {
   @HiveField(3)
   final String? dob; // yyyy-mm-dd
 
-  // ✅ NEW
   @HiveField(4)
   final String? lookingFor;
 
   @HiveField(5)
   final bool pendingSync;
+
+  // ✅ NEW: Photos (URLs)
+  @HiveField(6)
+  final List<String>? photos;
 
   ProfileHiveModel({
     required this.userId,
@@ -30,6 +33,7 @@ class ProfileHiveModel extends HiveObject {
     this.dob,
     this.lookingFor,
     this.pendingSync = true,
+    this.photos,
   });
 
   ProfileHiveModel copyWith({
@@ -39,6 +43,7 @@ class ProfileHiveModel extends HiveObject {
     String? dob,
     String? lookingFor,
     bool? pendingSync,
+    List<String>? photos,
   }) {
     return ProfileHiveModel(
       userId: userId ?? this.userId,
@@ -47,6 +52,7 @@ class ProfileHiveModel extends HiveObject {
       dob: dob ?? this.dob,
       lookingFor: lookingFor ?? this.lookingFor,
       pendingSync: pendingSync ?? this.pendingSync,
+      photos: photos ?? this.photos,
     );
   }
 }

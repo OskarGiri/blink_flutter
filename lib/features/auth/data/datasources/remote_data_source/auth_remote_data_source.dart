@@ -1,90 +1,108 @@
-import 'package:blink_flutter/core/api/api_client.dart';
+
+
 import 'package:blink_flutter/core/api/api_endpoints.dart';
+import 'package:blink_flutter/core/network/api_providers.dart';
+import 'package:blink_flutter/core/network/api_service.dart';
+import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/token_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/data/datasources/auth_data_source.dart';
+import 'package:blink_flutter/features/auth/data/datasources/profile_remote_datasource.dart';
+import 'package:blink_flutter/features/auth/data/datasources/profile_remote_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/models/auth_api_model.dart';
-import 'package:blink_flutter/features/auth/domain/entities/auth_entity.dart';
+import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider
 final authRemoteDatasourceProvider = Provider<IAuthDataSource>((ref) {
   return AuthRemoteDataSource(
-    apiClient: ref.read(apiClientProvider),
+    apiService: ref.read(apiServiceProvider),
     userSessionService: ref.read(userSessionServiceProvider),
     tokenService: ref.read(tokenServiceProvider),
+    hiveService: ref.read(hiveServiceProvider),
+    profileRemote: ref.read(profileRemoteDatasourceProvider),
   );
 });
 
 class AuthRemoteDataSource implements IAuthDataSource {
-  final ApiClient _apiClient;
+  final ApiService _apiService;
   final UserSessionService _userSessionService;
   final TokenService _tokenService;
+  final HiveService _hive;
+  final ProfileRemoteDatasource _profileRemote;
 
   AuthRemoteDataSource({
-    required ApiClient apiClient,
+    required ApiService apiService,
     required UserSessionService userSessionService,
     required TokenService tokenService,
-  }) : _apiClient = apiClient,
-       _userSessionService = userSessionService,
-       _tokenService = tokenService;
+    required HiveService hiveService,
+    required ProfileRemoteDatasource profileRemote,
+  })  : _apiService = apiService,
+        _userSessionService = userSessionService,
+        _tokenService = tokenService,
+        _hive = hiveService,
+        _profileRemote = profileRemote;
+
+  Future<void> _cacheMeToHive(String userId) async {
+    final me = await _profileRemote.getMe(); // already normalizes photos if you used my earlier version
+    final photos = (me["photos"] is List)
+        ? (me["photos"] as List).map((e) => e.toString()).toList()
+        : <String>[];
+
+    final profile = ProfileHiveModel(
+      userId: userId,
+      fullName: (me["fullName"] ?? "").toString(),
+      dob: (me["dob"] ?? "").toString(),
+      gender: (me["gender"] ?? "").toString(),
+      lookingFor: (me["lookingFor"] ?? "").toString(),
+      photos: photos,
+      pendingSync: false,
+    );
+
+    await _hive.saveProfile(profile);
+  }
 
   @override
   Future<AuthApiModel?> loginUser(String email, String password) async {
     debugPrint("🔥 LOGIN API CALL STARTED");
-    debugPrint("📧 Login Email: $email");
-
     try {
-      final response = await _apiClient.post(
+      final response = await _apiService.dio.post(
         ApiEndpoints.login,
         data: {"email": email, "password": password},
+        options: Options(headers: {"Content-Type": "application/json"}),
       );
-
-      debugPrint("✅ LOGIN RESPONSE: ${response.statusCode}");
-      debugPrint("📦 LOGIN DATA: ${response.data}");
 
       if (response.statusCode == 200) {
         final data = response.data;
-
-        if (data == null) {
-          throw Exception("Invalid login response from server");
-        }
-
         final String token = data['token'];
         final userData = data['user'];
 
-        // Save token
         await _tokenService.saveToken(token);
 
         if (userData != null) {
-          final user = AuthApiModel.fromJson(userData);
-          debugPrint("✅ Login successful");
-          debugPrint("User ID: ${user.userId}");
-          debugPrint("User Email: ${user.email}");
+          final user = AuthApiModel.fromJson(Map<String, dynamic>.from(userData));
+
+          await _userSessionService.saveUserSession(
+            userId: user.userId!,
+            email: user.email,
+            fullName: "",
+            username: user.username,
+          );
+
+          // ✅ NEW: auto-fetch /users/me and cache to Hive so Dashboard shows name/age/photos
+          await _cacheMeToHive(user.userId!);
+
           return user;
         }
-
-        return null;
-      } else {
-        throw Exception(response.data?['message'] ?? 'Login failed');
       }
-    } on DioException catch (e) {
-      debugPrint("❌ LOGIN DIO ERROR TYPE: ${e.type}");
-      debugPrint("STATUS CODE: ${e.response?.statusCode}");
-      debugPrint("RESPONSE DATA: ${e.response?.data}");
-      debugPrint("REQUEST OPTIONS: ${e.requestOptions}");
 
-      final message =
-          e.response?.data is Map && e.response?.data['message'] != null
+      throw Exception(response.data?['message'] ?? 'Login failed');
+    } on DioException catch (e) {
+      final message = (e.response?.data is Map && e.response?.data['message'] != null)
           ? e.response?.data['message']
           : 'Login failed. Please try again.';
-
       throw Exception(message);
-    } catch (e) {
-      debugPrint("❌ Login error: $e");
-      throw Exception('An error occurred: $e');
     }
   }
 
@@ -94,74 +112,41 @@ class AuthRemoteDataSource implements IAuthDataSource {
     required String email,
     required String password,
   }) async {
-    debugPrint("🔥 === SIGNUP API CALL STARTED ===");
-    debugPrint("🌐 BASE URL: ${_apiClient.dio.options.baseUrl}");
-    debugPrint("📡 ENDPOINT: ${ApiEndpoints.register}");
-    debugPrint("📧 Email: $email");
-    debugPrint("👤 Username: $username");
-
     try {
-      final requestData = {
-        "username": username,
-        "email": email,
-        "password": password,
-      };
-      debugPrint("📤 REQUEST DATA: $requestData");
-
-      final response = await _apiClient.post(
+      final response = await _apiService.dio.post(
         ApiEndpoints.register,
-        data: requestData,
+        data: {"username": username, "email": email, "password": password},
+        options: Options(headers: {"Content-Type": "application/json"}),
       );
-
-      debugPrint("✅ API RESPONSE STATUS: ${response.statusCode}");
-      debugPrint("📦 API RESPONSE DATA: ${response.data}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = response.data;
 
-        // Validate response structure
-        if (data == null || data['user'] == null) {
-          debugPrint("❌ Invalid response structure: ${data}");
-          throw Exception("Invalid registration response from server");
-        }
+        final user = AuthApiModel.fromJson(Map<String, dynamic>.from(data['user']));
 
-        // Parse user data (same structure as login)
-        final userData = data['user'];
-        final user = AuthApiModel.fromJson(userData);
-
-        // Save token if returned by API
         if (data['token'] != null) {
           await _tokenService.saveToken(data['token']);
-          debugPrint("🔑 Token saved");
         }
 
-        debugPrint("✅ Registration successful!");
-        debugPrint("👤 User ID: ${user.userId}");
-        debugPrint("📧 User Email: ${user.email}");
+        await _userSessionService.saveUserSession(
+          userId: user.userId!,
+          email: user.email,
+          fullName: "",
+          username: user.username,
+        );
 
-        return user; // Return created user for local caching
-      } else {
-        final message = response.data?['message'] ?? 'Registration failed';
-        debugPrint("❌ API returned error: $message");
-        throw Exception(message);
+        // optional: cache me after signup too
+        await _cacheMeToHive(user.userId!);
+
+        return user;
       }
-    } on DioException catch (e) {
-      debugPrint("❌ === DIO EXCEPTION ===");
-      debugPrint("TYPE: ${e.type}");
-      debugPrint("MESSAGE: ${e.message}");
-      debugPrint("STATUS CODE: ${e.response?.statusCode}");
-      debugPrint("RESPONSE DATA: ${e.response?.data}");
-      debugPrint("REQUEST URL: ${e.requestOptions.path}");
-      debugPrint("REQUEST HEADERS: ${e.requestOptions.headers}");
-      debugPrint("REQUEST DATA: ${e.requestOptions.data}");
 
-      final message =
-          e.response?.data?['message'] ??
-          'Registration failed. Please try again.';
+      throw Exception(response.data?['message'] ?? 'Registration failed');
+    } on DioException catch (e) {
+      final message = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response?.data['message']
+          : 'Registration failed. Please try again.';
       throw Exception(message);
-    } catch (e) {
-      debugPrint("❌ Registration error: $e");
-      throw Exception('An error occurred: $e');
     }
   }
 }

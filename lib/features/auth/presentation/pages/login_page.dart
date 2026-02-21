@@ -1,3 +1,8 @@
+// lib/features/auth/presentation/pages/login_page.dart
+import 'package:blink_flutter/core/services/hive/hive_service.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/dashboard_shell.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_fullname_page.dart';
 import 'package:blink_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:blink_flutter/features/auth/presentation/view_moodel/auth_view_model.dart';
@@ -16,6 +21,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _routing = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -25,13 +32,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _handleLogin() async {
     if (_loginFormKey.currentState!.validate()) {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .login(
+      await ref.read(authViewModelProvider.notifier).login(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
     }
+  }
+
+  bool _isProfileComplete(ProfileHiveModel? p) {
+    final fullName = (p?.fullName ?? "").trim();
+    final dob = (p?.dob ?? "").trim();
+    final gender = (p?.gender ?? "").trim();
+    final lookingFor = (p?.lookingFor ?? "").trim();
+    final photos = p?.photos ?? const <String>[];
+
+    return fullName.isNotEmpty &&
+        dob.isNotEmpty &&
+        gender.isNotEmpty &&
+        lookingFor.isNotEmpty &&
+        photos.isNotEmpty;
+  }
+
+  Future<void> _routeAfterLogin() async {
+    if (_routing) return;
+    _routing = true;
+
+    final session = ref.read(userSessionServiceProvider);
+    final hive = ref.read(hiveServiceProvider);
+
+    final userId = session.getCurrentUserId() ?? "guest";
+    final profile = await hive.getProfileByUserId(userId);
+    final complete = _isProfileComplete(profile);
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => complete ? const DashboardShell() : const ProfileFullNamePage(),
+      ),
+    );
   }
 
   @override
@@ -45,11 +85,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           next.status == AuthStatus.authenticated) {
         _showSnack(context, 'Login successful.');
 
-        // ✅ Go directly to Profile setup (no restart needed)
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileFullNamePage()),
-        );
+        // ✅ route based on profile completeness (instead of always ProfileFullNamePage)
+        Future.microtask(_routeAfterLogin);
       }
     });
 
@@ -70,7 +107,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 20),
-
                     Text(
                       "WELCOME BACK",
                       style: TextStyle(
@@ -79,36 +115,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         color: const Color(0xffB43AE6),
                       ),
                     ),
-
                     const SizedBox(height: 40),
 
-                    /// EMAIL
                     const Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Email",
-                        style: TextStyle(color: Color(0xffB43AE6)),
-                      ),
+                      child: Text("Email", style: TextStyle(color: Color(0xffB43AE6))),
                     ),
                     const SizedBox(height: 6),
                     _inputField(_emailController, false),
 
                     const SizedBox(height: 20),
 
-                    /// PASSWORD
                     const Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Password",
-                        style: TextStyle(color: Color(0xffB43AE6)),
-                      ),
+                      child: Text("Password", style: TextStyle(color: Color(0xffB43AE6))),
                     ),
                     const SizedBox(height: 6),
                     _inputField(_passwordController, true),
 
                     const SizedBox(height: 30),
 
-                    /// LOGIN BUTTON
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -121,15 +147,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                         child: authState.status == AuthStatus.loading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                            ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
                                 "Login",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(fontSize: 18, color: Colors.white),
                               ),
                       ),
                     ),
@@ -164,8 +185,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
