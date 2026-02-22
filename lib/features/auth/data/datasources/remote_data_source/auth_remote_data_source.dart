@@ -1,5 +1,3 @@
-
-
 import 'package:blink_flutter/core/api/api_endpoints.dart';
 import 'package:blink_flutter/core/network/api_providers.dart';
 import 'package:blink_flutter/core/network/api_service.dart';
@@ -38,14 +36,14 @@ class AuthRemoteDataSource implements IAuthDataSource {
     required TokenService tokenService,
     required HiveService hiveService,
     required ProfileRemoteDatasource profileRemote,
-  })  : _apiService = apiService,
-        _userSessionService = userSessionService,
-        _tokenService = tokenService,
-        _hive = hiveService,
-        _profileRemote = profileRemote;
+  }) : _apiService = apiService,
+       _userSessionService = userSessionService,
+       _tokenService = tokenService,
+       _hive = hiveService,
+       _profileRemote = profileRemote;
 
   Future<void> _cacheMeToHive(String userId) async {
-    final me = await _profileRemote.getMe(); // already normalizes photos if you used my earlier version
+    final me = await _profileRemote.getMe();
     final photos = (me["photos"] is List)
         ? (me["photos"] as List).map((e) => e.toString()).toList()
         : <String>[];
@@ -75,22 +73,27 @@ class AuthRemoteDataSource implements IAuthDataSource {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final String token = data['token'];
+
+        final String token = (data['token'] ?? '').toString();
         final userData = data['user'];
 
-        await _tokenService.saveToken(token);
+        if (token.isNotEmpty) {
+          await _tokenService.saveToken(token);
+        }
 
         if (userData != null) {
-          final user = AuthApiModel.fromJson(Map<String, dynamic>.from(userData));
+          final user = AuthApiModel.fromJson(
+            Map<String, dynamic>.from(userData),
+          );
 
           await _userSessionService.saveUserSession(
             userId: user.userId!,
             email: user.email,
             fullName: "",
             username: user.username,
+            authToken: token, // ✅ FIX
           );
 
-          // ✅ NEW: auto-fetch /users/me and cache to Hive so Dashboard shows name/age/photos
           await _cacheMeToHive(user.userId!);
 
           return user;
@@ -99,7 +102,8 @@ class AuthRemoteDataSource implements IAuthDataSource {
 
       throw Exception(response.data?['message'] ?? 'Login failed');
     } on DioException catch (e) {
-      final message = (e.response?.data is Map && e.response?.data['message'] != null)
+      final message =
+          (e.response?.data is Map && e.response?.data['message'] != null)
           ? e.response?.data['message']
           : 'Login failed. Please try again.';
       throw Exception(message);
@@ -122,10 +126,13 @@ class AuthRemoteDataSource implements IAuthDataSource {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = response.data;
 
-        final user = AuthApiModel.fromJson(Map<String, dynamic>.from(data['user']));
+        final user = AuthApiModel.fromJson(
+          Map<String, dynamic>.from(data['user']),
+        );
 
-        if (data['token'] != null) {
-          await _tokenService.saveToken(data['token']);
+        final String token = (data['token'] ?? '').toString();
+        if (token.isNotEmpty) {
+          await _tokenService.saveToken(token);
         }
 
         await _userSessionService.saveUserSession(
@@ -133,9 +140,9 @@ class AuthRemoteDataSource implements IAuthDataSource {
           email: user.email,
           fullName: "",
           username: user.username,
+          authToken: token, // ✅ FIX
         );
 
-        // optional: cache me after signup too
         await _cacheMeToHive(user.userId!);
 
         return user;
@@ -143,7 +150,8 @@ class AuthRemoteDataSource implements IAuthDataSource {
 
       throw Exception(response.data?['message'] ?? 'Registration failed');
     } on DioException catch (e) {
-      final message = (e.response?.data is Map && e.response?.data['message'] != null)
+      final message =
+          (e.response?.data is Map && e.response?.data['message'] != null)
           ? e.response?.data['message']
           : 'Registration failed. Please try again.';
       throw Exception(message);

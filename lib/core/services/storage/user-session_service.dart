@@ -24,6 +24,7 @@ class UserSessionService {
   static const String _keyUserPhoneNumber = 'user_phone_number';
   static const String _keyUserBatchId = 'user_batch_id';
   static const String _keyUserProfilePicture = 'user_profile_picture';
+  static const String _keyAuthToken = 'auth_token';
 
   UserSessionService({required SharedPreferences prefs}) : _prefs = prefs;
 
@@ -33,11 +34,13 @@ class UserSessionService {
     required String email,
     required String fullName,
     required String username,
+    required String authToken,
     String? phoneNumber,
     String? batchId,
     String? profilePicture,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
+    await _prefs.setString(_keyAuthToken, authToken);
     await _prefs.setString(_keyUserId, userId);
     await _prefs.setString(_keyUserEmail, email);
     await _prefs.setString(_keyUserFullName, fullName);
@@ -93,6 +96,11 @@ class UserSessionService {
     return _prefs.getString(_keyUserProfilePicture);
   }
 
+  // Get auth token
+  String? getToken() {
+    return _prefs.getString(_keyAuthToken);
+  }
+
   // Clear user session (logout)
   Future<void> clearSession() async {
     await _prefs.remove(_keyIsLoggedIn);
@@ -103,5 +111,6 @@ class UserSessionService {
     await _prefs.remove(_keyUserPhoneNumber);
     await _prefs.remove(_keyUserBatchId);
     await _prefs.remove(_keyUserProfilePicture);
+    await _prefs.remove(_keyAuthToken);
   }
 }
