@@ -21,4 +21,5 @@ class ApiEndpoints {
   static const String matches = "/matches";
   // add inside ApiEndpoints class
   static String matchMessages(String matchId) => "/matches/$matchId/messages";
+  static const String changePassword = "/users/change-password";
 }

@@ -150,6 +150,13 @@ class _MatchTile extends StatelessWidget {
 
     final avatarUrl = photos.isNotEmpty ? photos.first : null;
 
+    // ✅ NEW: last message preview (backend must return match["lastMessage"])
+    final last = (match["lastMessage"] is Map)
+        ? Map<String, dynamic>.from(match["lastMessage"])
+        : null;
+
+    final lastText = last == null ? "" : (last["text"] ?? "").toString().trim();
+
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: () => onTap(matchId, name, avatarUrl),
@@ -164,15 +171,34 @@ class _MatchTile extends StatelessWidget {
               left: 12,
               right: 12,
               bottom: 12,
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (lastText.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      lastText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.90),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

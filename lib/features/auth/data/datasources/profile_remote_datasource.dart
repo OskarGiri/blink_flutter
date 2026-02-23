@@ -34,4 +34,17 @@ class ProfileRemoteDatasource {
     final res = await apiService.dio.put(ApiEndpoints.updateMe, data: body);
     return _normalize(Map<String, dynamic>.from(res.data));
   }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await apiService.dio.post(
+      ApiEndpoints.changePassword,
+      data: {
+        "currentPassword": currentPassword,
+        "newPassword": newPassword,
+      },
+    );
+  }
 }

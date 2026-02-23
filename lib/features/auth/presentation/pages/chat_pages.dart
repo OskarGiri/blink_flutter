@@ -38,12 +38,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void initState() {
     super.initState();
 
-    // ✅ Listen once (Tinder-style), do NOT put ref.listen inside build()
+    // ✅ listen once (do NOT listen inside build)
     _socketSub = ref.listenManual<AsyncValue<Map<String, dynamic>>>(
       messageNewStreamProvider,
-      (_, next) {
-        next.whenData(_handleIncomingSocketMessage);
-      },
+      (_, next) => next.whenData(_handleIncomingSocketMessage),
     );
 
     Future.microtask(_loadMessages);
@@ -55,31 +53,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
-  }
-
-  void _handleIncomingSocketMessage(Map<String, dynamic> payload) {
-    final matchId = (payload['matchId'] ?? '').toString();
-    if (matchId != widget.matchId) return;
-
-    final id = (payload['id'] ?? '').toString();
-    final senderId = (payload['senderId'] ?? '').toString();
-    final text = (payload['text'] ?? '').toString();
-    final createdAt = (payload['createdAt'] ?? '').toString();
-    if (id.isEmpty || text.isEmpty) return;
-
-    if (_messages.any((m) => m.id == id)) return;
-
-    final myId = _myUserId();
-    final incoming = _Msg(
-      id: id,
-      isMe: myId.isNotEmpty && senderId == myId,
-      text: text,
-      createdAt: createdAt,
-    );
-
-    if (!mounted) return;
-    setState(() => _messages = [..._messages, incoming]);
-    _scrollToBottom();
   }
 
   Future<void> _loadMessages() async {
@@ -123,6 +96,46 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
+  void _handleIncomingSocketMessage(Map<String, dynamic> payload) {
+    final matchId = (payload['matchId'] ?? '').toString();
+    if (matchId != widget.matchId) return;
+
+    final id = (payload['id'] ?? '').toString();
+    final senderId = (payload['senderId'] ?? '').toString();
+    final text = (payload['text'] ?? '').toString();
+    final createdAt = (payload['createdAt'] ?? '').toString();
+    if (id.isEmpty || text.trim().isEmpty) return;
+
+    final myId = _myUserId();
+    final incoming = _Msg(
+      id: id,
+      isMe: myId.isNotEmpty && senderId == myId,
+      text: text,
+      createdAt: createdAt,
+    );
+
+    if (!mounted) return;
+
+    // ✅ if we already have this real message, ignore
+    if (_messages.any((m) => m.id == incoming.id)) return;
+
+    // ✅ replace optimistic tmp_* with real message (same text, closest last)
+    final tmpIndex = _messages.lastIndexWhere(
+      (m) => m.id.startsWith('tmp_') && m.text == incoming.text,
+    );
+    if (tmpIndex != -1) {
+      final updated = [..._messages];
+      updated[tmpIndex] = incoming;
+      setState(() => _messages = updated);
+      _scrollToBottom();
+      return;
+    }
+
+    // ✅ otherwise append
+    setState(() => _messages = [..._messages, incoming]);
+    _scrollToBottom();
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -142,13 +155,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() => _sending = true);
     _controller.clear();
 
+    // ✅ optimistic add (instant UI)
     final optimistic = _Msg(
       id: "tmp_${DateTime.now().millisecondsSinceEpoch}",
       isMe: true,
       text: text,
       createdAt: DateTime.now().toIso8601String(),
     );
-
     setState(() => _messages = [..._messages, optimistic]);
     _scrollToBottom();
 
@@ -156,8 +169,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       final api = ref.read(messagesRemoteDatasourceProvider);
       await api.sendMessage(matchId: widget.matchId, text: text);
 
-      // Keep this one-time refresh to replace tmp_* id with real id
-      await _loadMessages();
+      // ✅ DO NOT call _loadMessages() here
+      // Server will emit "message:new" to both users and we will replace tmp_.
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = "Send failed: $e");

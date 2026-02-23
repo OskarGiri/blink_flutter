@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:blink_flutter/core/constants/hive_table_constant.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:blink_flutter/features/auth/data/models/user_hive_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 final hiveServiceProvider = Provider<HiveService>((ref) {
@@ -92,6 +94,16 @@ class HiveService {
   // ========================= Profile CRUD =========================
   Box<ProfileHiveModel> get _profileBox =>
       Hive.box<ProfileHiveModel>(HiveTableConstant.profileTable);
+
+  /// ✅ REAL-TIME: use this in UI via ValueListenableBuilder
+  ValueListenable<Box<ProfileHiveModel>> profileListenable() {
+    return _profileBox.listenable();
+  }
+
+  /// ✅ REAL-TIME: sync read (no FutureBuilder)
+  ProfileHiveModel? getProfileByUserIdSync(String userId) {
+    return _profileBox.get(userId);
+  }
 
   Future<ProfileHiveModel?> saveProfile(ProfileHiveModel profile) async {
     await _profileBox.put(profile.userId, profile);
