@@ -1,9 +1,12 @@
-// lib/features/profile/presentation/profile_page.dart
+// =====================================================
+// FILE: lib/features/auth/presentation/pages/profile_pages.dart
+// (REAL-TIME Profile tab using Hive listenable)
+// =====================================================
 import 'package:blink_flutter/core/realtime/socket_providers.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/token_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
-import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_camera_avatar_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_edit_page.dart';
@@ -22,7 +25,6 @@ class ProfilePage extends ConsumerWidget {
     final session = ref.read(userSessionServiceProvider);
 
     ref.read(socketServiceProvider).disconnect();
-
     await token.removeToken();
     await session.clearSession();
 
@@ -41,8 +43,7 @@ class ProfilePage extends ConsumerWidget {
     return ValueListenableBuilder(
       valueListenable: hive.profileListenable(),
       builder: (context, _, __) {
-        final ProfileHiveModel? p = hive.getProfileByUserIdSync(_userId(ref));
-
+        final p = hive.getProfileByUserIdSync(_userId(ref));
         final name = (p?.fullName ?? "").trim().isNotEmpty
             ? p!.fullName
             : "Profile";
@@ -50,106 +51,125 @@ class ProfilePage extends ConsumerWidget {
         final avatar = photos.isNotEmpty ? photos.first : null;
 
         return Scaffold(
-          appBar: AppBar(leading: const BackButton(), title: const Text("")),
-          body: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 540),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  CircleAvatar(
-                    radius: 54,
-                    backgroundImage: avatar == null
-                        ? null
-                        : NetworkImage(avatar),
-                    child: avatar == null
-                        ? const Icon(Icons.person, size: 54)
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 540),
+                    child: Column(
                       children: [
-                        _ProfileAction(
-                          icon: Icons.settings,
-                          label: "Settings",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ProfileSettingsPage(),
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 20),
+                        CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundImage: avatar == null
+                              ? null
+                              : NetworkImage(avatar),
+                          child: avatar == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.white,
+                                )
+                              : null,
                         ),
-                        _ProfileAction(
-                          icon: Icons.edit,
-                          label: "Edit profile",
-                          badge: true,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const EditProfilePage(),
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 16),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        _ProfileAction(
-                          icon: Icons.camera_alt,
-                          label: "Add media",
-                          red: true,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ProfileCameraAvatarPage(),
+                        const SizedBox(height: 36),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _ProfileAction(
+                                icon: Icons.settings_outlined,
+                                label: "Settings",
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ProfileSettingsPage(),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
+                              _ProfileAction(
+                                icon: Icons.edit_outlined,
+                                label: "Edit Profile",
+                                badge: true,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const EditProfilePage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _ProfileAction(
+                                icon: Icons.camera_alt_outlined,
+                                label: "Add Media",
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ProfileCameraAvatarPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 40),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _logout(context, ref),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                elevation: 8,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.logout,
+                                color: AppTheme.primaryPurple,
+                              ),
+                              label: const Text(
+                                "Logout",
+                                style: TextStyle(
+                                  color: AppTheme.primaryPurple,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _logout(context, ref),
-                        icon: const Icon(Icons.logout),
-                        label: const Text("Logout"),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(40),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -163,21 +183,17 @@ class _ProfileAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool badge;
-  final bool red;
   final VoidCallback? onTap;
 
   const _ProfileAction({
     required this.icon,
     required this.label,
     this.badge = false,
-    this.red = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = red ? Colors.redAccent : Colors.grey.shade700;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -188,22 +204,31 @@ class _ProfileAction extends StatelessWidget {
             Stack(
               children: [
                 CircleAvatar(
-                  radius: 28,
-                  backgroundColor: red
-                      ? Colors.redAccent.withOpacity(0.12)
-                      : Colors.grey.shade200,
-                  child: Icon(icon, color: color),
+                  radius: 32,
+                  backgroundColor: Colors.white,
+                  child: Icon(icon, color: AppTheme.primaryPurple, size: 28),
                 ),
                 if (badge)
                   const Positioned(
-                    top: 2,
-                    right: 2,
-                    child: CircleAvatar(radius: 5, backgroundColor: Colors.red),
+                    top: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 6,
+                      backgroundColor: Colors.redAccent,
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

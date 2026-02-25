@@ -1,4 +1,7 @@
 import 'package:blink_flutter/core/services/connectivity/network_info.dart';
+import 'package:blink_flutter/core/services/hive/hive_service.dart';
+import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/data/datasources/matches_remote_datasources_providers.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/chat_pages.dart';
 import 'package:blink_flutter/features/auth/presentation/providers/matches_refresh_trigger_provider.dart';
@@ -18,6 +21,9 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
   List<Map<String, dynamic>> _matches = [];
 
   late final ProviderSubscription<int> _refreshSub;
+
+  String _userId() =>
+      ref.read(userSessionServiceProvider).getCurrentUserId() ?? "guest";
 
   @override
   void initState() {
@@ -45,22 +51,32 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
       _error = null;
     });
 
+    final uid = _userId();
+    final net = ref.read(networkInfoProvider);
+    final hive = ref.read(hiveServiceProvider);
+
     try {
-      final net = ref.read(networkInfoProvider);
       final connected = await net.isConnected;
 
+      // ✅ OFFLINE: load cached matches
       if (!connected) {
+        final cached = await hive.getMatchesCache(uid);
+
         if (!mounted) return;
         setState(() {
+          _matches = cached
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
           _loading = false;
-          _error = "Offline: matches need internet (for now).";
-          _matches = [];
+          _error = null;
         });
         return;
       }
 
+      // ✅ ONLINE: fetch + cache
       final api = ref.read(matchesRemoteDatasourceProvider);
       final list = await api.getMatches();
+      await hive.saveMatchesCache(uid, list);
 
       if (!mounted) return;
       setState(() {
@@ -70,12 +86,25 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = "Failed to load matches: $e";
-        _matches = [];
-      });
+      // fallback: show cache if online failed
+      try {
+        final cached = await hive.getMatchesCache(uid);
+        if (!mounted) return;
+        setState(() {
+          _matches = cached
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+          _loading = false;
+          _error = cached.isEmpty ? "Failed to load matches: $e" : null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _error = "Failed to load matches: $e";
+          _matches = [];
+        });
+      }
     }
   }
 
@@ -120,8 +149,32 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
           );
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Matches")),
-      body: body,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  "My Matches",
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -150,7 +203,6 @@ class _MatchTile extends StatelessWidget {
 
     final avatarUrl = photos.isNotEmpty ? photos.first : null;
 
-    // ✅ NEW: last message preview (backend must return match["lastMessage"])
     final last = (match["lastMessage"] is Map)
         ? Map<String, dynamic>.from(match["lastMessage"])
         : null;
@@ -280,19 +332,23 @@ class _EmptyState extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       children: const [
         SizedBox(height: 120),
-        Icon(Icons.favorite_border, size: 64, color: Color(0xFFBDBDBD)),
+        Icon(Icons.favorite_border, size: 64, color: Colors.white70),
         SizedBox(height: 12),
         Center(
           child: Text(
             'No matches yet',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ),
         SizedBox(height: 6),
         Center(
           child: Text(
             'Keep swiping — your matches will appear here.',
-            style: TextStyle(color: Color(0xFF757575)),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ),
       ],
@@ -313,14 +369,28 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         const SizedBox(height: 80),
-        const Icon(Icons.error_outline, size: 56),
+        const Icon(Icons.error_outline, size: 56, color: Colors.white70),
         const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
         const SizedBox(height: 16),
         Center(
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              elevation: 8,
+            ),
             onPressed: () => onRetry(),
-            child: const Text('Retry'),
+            child: const Text(
+              'Retry',
+              style: TextStyle(
+                color: AppTheme.primaryPurple,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],

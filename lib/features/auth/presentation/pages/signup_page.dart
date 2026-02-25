@@ -1,3 +1,4 @@
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:blink_flutter/features/auth/presentation/view_moodel/auth_view_model.dart';
 import 'package:flutter/material.dart';
@@ -101,124 +102,174 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     final inputWidth = size.width * 0.85;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Form(
-            key: _signUpFromKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: size.height * 0.05),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Form(
+              key: _signUpFromKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: size.height * 0.04),
 
-                Text(
-                  "WELCOME\nTO\nBlink",
-                  style: TextStyle(
-                    fontSize: size.width * 0.085,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple.shade700,
-                  ),
-                ),
-
-                SizedBox(height: size.height * 0.06),
-
-                /// USERNAME
-                Text(
-                  "Username",
-                  style: TextStyle(color: Colors.purple.shade600),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: inputWidth,
-                  child: TextField(
-                    controller: _usernameController,
-                    decoration: _inputDecoration(),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                /// EMAIL
-                Text("Email", style: TextStyle(color: Colors.purple.shade600)),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: inputWidth,
-                  child: TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: _inputDecoration(),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                /// PASSWORD
-                Text(
-                  "Password",
-                  style: TextStyle(color: Colors.purple.shade600),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: inputWidth,
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: _inputDecoration(),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                /// SIGN UP BUTTON
-                SizedBox(
-                  width: inputWidth,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  Text(
+                    "CREATE ACCOUNT",
+                    style: TextStyle(
+                      fontSize: size.width * 0.08,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
-                    onPressed: _handleSignup,
-                    child: authState.status == AuthStatus.loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Sign Up", style: TextStyle(fontSize: 18)),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Join Blink today",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.85),
+                    ),
+                  ),
 
-                const SizedBox(height: 25),
+                  SizedBox(height: size.height * 0.05),
 
-                /// LOGIN LINK
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Already have an account? "),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginPage(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.bold,
+                  /// USERNAME
+                  Text(
+                    "Username",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
+                      controller: _usernameController,
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// EMAIL
+                  Text(
+                    "Email",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// PASSWORD
+                  Text(
+                    "Password",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  /// SIGN UP BUTTON
+                  SizedBox(
+                    width: inputWidth,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryPurple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMedium,
                           ),
                         ),
+                        elevation: 4,
                       ),
-                    ],
+                      onPressed: _handleSignup,
+                      child: authState.status == AuthStatus.loading
+                          ? const CircularProgressIndicator(
+                              color: AppTheme.primaryPurple,
+                            )
+                          : const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
                   ),
-                ),
 
-                SizedBox(height: size.height * 0.05),
-              ],
+                  const SizedBox(height: 28),
+
+                  /// LOGIN LINK
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already have an account? ",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LoginPage(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Login",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: size.height * 0.05),
+                ],
+              ),
             ),
           ),
         ),
@@ -229,10 +280,18 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   InputDecoration _inputDecoration() {
     return InputDecoration(
       filled: true,
-      fillColor: Colors.grey.shade200,
+      fillColor: Colors.white.withOpacity(0.95),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.paddingMedium,
+        vertical: AppTheme.paddingMedium,
+      ),
+      hintStyle: TextStyle(
+        color: AppTheme.darkGrey.withOpacity(0.6),
+        fontSize: 14,
       ),
     );
   }

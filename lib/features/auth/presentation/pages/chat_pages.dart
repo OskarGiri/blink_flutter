@@ -1,5 +1,6 @@
 import 'package:blink_flutter/core/realtime/socket_providers.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/data/datasources/message_remote_datasource_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -183,86 +184,99 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     final body = _loading
         ? const Center(child: CircularProgressIndicator())
-        : Column(
-            children: [
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                  child: Text(
-                    _error!,
-                    style: TextStyle(color: Colors.red.shade700),
-                  ),
-                ),
-              Expanded(
-                child: ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, i) {
-                    final m = _messages[i];
-                    return Align(
-                      alignment: m.isMe
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: m.isMe ? Colors.blue : Colors.grey.shade200,
-                        ),
-                        child: Text(
-                          m.text,
-                          style: TextStyle(
-                            color: m.isMe ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SafeArea(
-                top: false,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.grey.shade200),
+        : Container(
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
+            child: Column(
+              children: [
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: Colors.red.shade700),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          decoration: const InputDecoration(
-                            hintText: "Type a message ...",
-                            border: InputBorder.none,
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, i) {
+                      final m = _messages[i];
+                      return Align(
+                        alignment: m.isMe
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
                           ),
-                          onSubmitted: (_) => _send(),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            color: m.isMe ? Colors.blue : Colors.grey.shade200,
+                          ),
+                          child: Text(
+                            m.text,
+                            style: TextStyle(
+                              color: m.isMe ? Colors.white : Colors.black87,
+                            ),
+                          ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: _sending ? null : _send,
-                        child: Text(_sending ? "..." : "SEND"),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
-              ),
-            ],
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: Colors.grey.shade200),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            decoration: const InputDecoration(
+                              hintText: "Type a message ...",
+                              border: InputBorder.none,
+                            ),
+                            onSubmitted: (_) => _send(),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _sending ? null : _send,
+                          child: Text(_sending ? "..." : "SEND"),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        leading: const BackButton(),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const BackButton(color: Colors.white),
+        ),
         title: Row(
           children: [
             CircleAvatar(
@@ -274,14 +288,32 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   ? const Icon(Icons.person, size: 16)
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text(widget.title, overflow: TextOverflow.ellipsis),
+              child: Text(
+                widget.title,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         ),
         actions: [
-          IconButton(onPressed: _loadMessages, icon: const Icon(Icons.refresh)),
+          Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: _loadMessages,
+              icon: const Icon(Icons.refresh, color: Colors.white),
+            ),
+          ),
         ],
       ),
       body: body,

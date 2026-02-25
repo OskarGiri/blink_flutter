@@ -3,6 +3,7 @@ import 'package:blink_flutter/core/services/connectivity/network_info.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/token_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/data/datasources/profile_remote_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/dashboard_shell.dart';
@@ -18,11 +19,40 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
     Future.microtask(_route);
+  }
+
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   bool _isProfileComplete(ProfileHiveModel? profile) {
@@ -105,23 +135,117 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 169, 109, 181),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite, size: 100, color: Colors.white),
-            SizedBox(height: 20),
-            Text(
-              "Blink Dating",
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.splashGradient),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top Spacing
+                SizedBox(height: size.height * 0.15),
+
+                // Logo and App Name with Animations
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      children: [
+                        // Animated Icon/Logo
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.favorite,
+                              size: 64,
+                              color: Colors.white.withOpacity(0.95),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // App Name
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Colors.white, Colors.white70],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Blink',
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Tagline at the bottom
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const Text(
+                          '"Meet your',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const Text(
+                          'match"',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+
+                        // Loading indicator
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white.withOpacity(0.7),
+                            ),
+                            strokeWidth: 3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 48),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

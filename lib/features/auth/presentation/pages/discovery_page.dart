@@ -2,8 +2,10 @@
 import 'dart:math' as math;
 
 import 'package:blink_flutter/core/services/connectivity/network_info.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/services/sync/swipe_sync_service.dart';
 import 'package:blink_flutter/features/auth/data/datasources/discovery_remote_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/datasources/swipe_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
@@ -48,6 +50,9 @@ class _DiscoveryPageState extends ConsumerState<DiscoveryPage> {
 
     try {
       if (connected) {
+        // ✅ NEW: sync queued offline swipes before refreshing discovery
+        await ref.read(swipeSyncServiceProvider).syncPendingSwipes(uid);
+
         final list = await remote.getDiscovery();
         await hive.saveDiscoveryCache(uid, list);
         _cards = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -193,11 +198,18 @@ class _DiscoveryPageState extends ConsumerState<DiscoveryPage> {
     final net = ref.read(networkInfoProvider);
     final connected = await net.isConnected;
 
+    // ✅ OFFLINE: queue swipe
     if (!connected) {
+      final hive = ref.read(hiveServiceProvider);
+      await hive.enqueueSwipe(
+        userId: _userId(),
+        targetUserId: targetUserId,
+        action: action,
+      );
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Offline: swipe will be added later (Day 2.5 sync)"),
-        ),
+        const SnackBar(content: Text("Saved offline. Will sync when online.")),
       );
       return;
     }
@@ -272,83 +284,145 @@ class _DiscoveryPageState extends ConsumerState<DiscoveryPage> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final maxWidth = c.maxWidth >= 900
-            ? 620.0
-            : (c.maxWidth >= 600 ? 540.0 : double.infinity);
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text("Discover"),
-                actions: [
-                  IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
-                ],
-              ),
-              body: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _cards.isEmpty
-                  ? const Center(
-                      child: Text("No more people. Create more users in DB."),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Builder(
-                              builder: (cardCtx) => GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTapUp: (d) =>
-                                    _handleTapToChangePhoto(cardCtx, d),
-                                onPanUpdate: (d) =>
-                                    setState(() => _dragOffset += d.delta),
-                                onPanEnd: (_) =>
-                                    _finishSwipe(Size(c.maxWidth, c.maxHeight)),
-                                child: _DiscoveryCard(
-                                  key: _topCardKey,
-                                  user: _cards.first,
-                                  dragOffset: _dragOffset,
-                                  showShadow: true,
-                                  ageFromDob: _ageFromDob,
-                                ),
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _cards.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No more people. Create more users in DB.",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      Builder(
+                        builder: (cardCtx) => GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: (d) => _handleTapToChangePhoto(cardCtx, d),
+                          onPanUpdate: (d) =>
+                              setState(() => _dragOffset += d.delta),
+                          onPanEnd: (_) =>
+                              _finishSwipe(Size(c.maxWidth, c.maxHeight)),
+                          child: Transform.translate(
+                            offset: _dragOffset,
+                            child: Transform.rotate(
+                              angle: _dragOffset.dx * 0.0006,
+                              child: _DiscoveryCard(
+                                key: _topCardKey,
+                                user: _cards.first,
+                                dragOffset: Offset.zero,
+                                showShadow: false,
+                                ageFromDob: _ageFromDob,
+                                isFullScreen: true,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 14),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _CircleButton(
-                                icon: Icons.close,
-                                size: 66,
-                                onTap: () async {
-                                  final top = _cards.first;
-                                  final id = top["_id"]?.toString() ?? "";
-                                  if (id.isNotEmpty)
-                                    await _sendSwipe(id, "pass", top);
-                                  _popTopCard();
-                                },
-                              ),
-                              _CircleButton(
-                                icon: Icons.favorite,
-                                size: 66,
-                                onTap: () async {
-                                  final top = _cards.first;
-                                  final id = top["_id"]?.toString() ?? "";
-                                  if (id.isNotEmpty)
-                                    await _sendSwipe(id, "like", top);
-                                  _popTopCard();
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-            ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0),
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          "${_displayName(_cards.first)} ${_ageFromDob(_cards.first["dob"])}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.verified,
+                                        color: Colors.lightBlueAccent,
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _CircleButton(
+                                      icon: Icons.close,
+                                      size: 72,
+                                      color: const Color(0xFFFF4757),
+                                      onTap: () async {
+                                        final top = _cards.first;
+                                        final id = top["_id"]?.toString() ?? "";
+                                        if (id.isNotEmpty) {
+                                          await _sendSwipe(id, "pass", top);
+                                        }
+                                        _popTopCard();
+                                      },
+                                    ),
+                                    _CircleButton(
+                                      icon: Icons.favorite,
+                                      size: 72,
+                                      color: const Color(0xFF2ED573),
+                                      onTap: () async {
+                                        final top = _cards.first;
+                                        final id = top["_id"]?.toString() ?? "";
+                                        if (id.isNotEmpty) {
+                                          await _sendSwipe(id, "like", top);
+                                        }
+                                        _popTopCard();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 18,
+                        right: 18,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.info_outline,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          onPressed: _load,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         );
       },
@@ -356,10 +430,13 @@ class _DiscoveryPageState extends ConsumerState<DiscoveryPage> {
   }
 }
 
+// ---- everything below is unchanged from your code ----
+
 class _DiscoveryCard extends StatefulWidget {
   final Map<String, dynamic> user;
   final Offset dragOffset;
   final bool showShadow;
+  final bool isFullScreen;
   final int Function(dynamic dob) ageFromDob;
 
   const _DiscoveryCard({
@@ -368,6 +445,7 @@ class _DiscoveryCard extends StatefulWidget {
     required this.dragOffset,
     required this.showShadow,
     required this.ageFromDob,
+    this.isFullScreen = false,
   });
 
   @override
@@ -479,6 +557,88 @@ class _DiscoveryCardState extends State<_DiscoveryCard> {
         : (widget.user["username"]?.toString() ?? "User");
 
     final age = widget.ageFromDob(widget.user["dob"]);
+
+    if (widget.isFullScreen) {
+      return ClipRRect(
+        borderRadius: BorderRadius.zero,
+        child: Container(
+          decoration: const BoxDecoration(color: Colors.grey),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    PageView.builder(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: photoCount,
+                      itemBuilder: (_, i) {
+                        final url = slots[i];
+                        if (url == null) {
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.photo_outlined, size: 56),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "No photo",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        return Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey.shade300,
+                            child: const Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                size: 56,
+                              ),
+                            ),
+                          ),
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: Colors.grey.shade300,
+                              alignment: Alignment.center,
+                              child: const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      top: 12,
+                      child: _PhotoBars(count: photoCount, index: _photoIndex),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Transform.translate(
       offset: widget.dragOffset,
@@ -815,11 +975,13 @@ class _Badge extends StatelessWidget {
 class _CircleButton extends StatelessWidget {
   final IconData icon;
   final double size;
+  final Color color;
   final VoidCallback onTap;
 
   const _CircleButton({
     required this.icon,
     required this.size,
+    required this.color,
     required this.onTap,
   });
 
@@ -832,10 +994,10 @@ class _CircleButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.black.withOpacity(0.08),
-          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          color: color.withOpacity(0.15),
+          border: Border.all(color: color, width: 2),
         ),
-        child: Icon(icon, size: size * 0.44),
+        child: Icon(icon, size: size * 0.44, color: color),
       ),
     );
   }

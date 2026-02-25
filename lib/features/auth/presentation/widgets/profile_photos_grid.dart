@@ -1,9 +1,11 @@
+// FILE: lib/features/auth/presentation/widgets/profile_photos_grid.dart
+// (REAL-TIME photos grid - updates instantly when Hive profile changes)
+// =====================================================
 import 'dart:io';
 
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/data/datasources/photo_remote_datasource_provider.dart';
-import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -34,10 +36,6 @@ class _ProfilePhotosGridState extends ConsumerState<ProfilePhotosGrid> {
   String _userId() =>
       ref.read(userSessionServiceProvider).getCurrentUserId() ?? "guest";
 
-  Future<ProfileHiveModel?> _loadProfile() {
-    return ref.read(hiveServiceProvider).getProfileByUserId(_userId());
-  }
-
   Future<void> _savePhotos(List<String> photos) async {
     final hive = ref.read(hiveServiceProvider);
     final existing = await hive.getProfileByUserId(_userId());
@@ -58,7 +56,6 @@ class _ProfilePhotosGridState extends ConsumerState<ProfilePhotosGrid> {
       final photos = await remote.uploadPhoto(File(picked.path));
       await _savePhotos(photos);
       widget.onChanged?.call();
-      if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -76,7 +73,6 @@ class _ProfilePhotosGridState extends ConsumerState<ProfilePhotosGrid> {
       final photos = await remote.deletePhotoByIndex(index);
       await _savePhotos(photos);
       widget.onChanged?.call();
-      if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -89,10 +85,14 @@ class _ProfilePhotosGridState extends ConsumerState<ProfilePhotosGrid> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<ProfileHiveModel?>(
-      future: _loadProfile(),
-      builder: (context, snap) {
-        final photos = snap.data?.photos ?? const <String>[];
+    final hive = ref.read(hiveServiceProvider);
+    final userId = _userId();
+
+    return ValueListenableBuilder(
+      valueListenable: hive.profileListenable(),
+      builder: (context, _, __) {
+        final p = hive.getProfileByUserIdSync(userId);
+        final photos = p?.photos ?? const <String>[];
 
         return Stack(
           children: [

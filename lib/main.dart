@@ -1,6 +1,8 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/splash_page.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  await HiveService().init();
+  // Initialize Hive only on mobile platforms (not web)
+  if (!kIsWeb) {
+    await HiveService().init();
+  }
 
   // SharedPreferences for session + token
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -29,10 +33,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Blink App',
-      home: SplashScreen(),
+      theme: AppTheme.lightTheme,
+      home: const SplashScreen(),
     );
   }
 }

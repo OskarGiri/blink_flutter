@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/signup_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -53,124 +54,139 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isTablet = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// SKIP (disabled)
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12, top: 6),
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignUpPage()),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              /// SKIP (disabled)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12, top: 6),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                      );
+                    },
+                    child: Text(
+                      "Skip",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              /// PAGES
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (index) =>
+                      setState(() => _currentIndex = index),
+                  itemCount: onboardingData.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 80 : 30,
+                        vertical: isTablet ? 20 : 10,
+                      ),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            flex: isTablet ? 6 : 5,
+                            child: Image.asset(
+                              onboardingData[index]["image"]!,
+                              fit: BoxFit.contain,
+                              width: double.infinity,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            onboardingData[index]["title"]!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: isTablet ? 28 : 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            onboardingData[index]["description"]!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 14,
+                              color: Colors.white.withOpacity(0.85),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                        ],
+                      ),
                     );
                   },
-                  child: const Text(
-                    "Skip",
-                    style: TextStyle(color: Colors.black87),
-                  ),
                 ),
               ),
-            ),
 
-            /// PAGES
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (index) => setState(() => _currentIndex = index),
-                itemCount: onboardingData.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 80 : 30,
-                      vertical: isTablet ? 20 : 10,
+              /// DOT INDICATOR
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  onboardingData.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
+                    width: _currentIndex == index ? 18 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _currentIndex == index
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          flex: isTablet ? 6 : 5,
-                          child: Image.asset(
-                            onboardingData[index]["image"]!,
-                            fit: BoxFit.contain,
-                            width: double.infinity,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          onboardingData[index]["title"]!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: isTablet ? 28 : 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          onboardingData[index]["description"]!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: isTablet ? 18 : 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                      ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// NEXT BUTTON
+              SizedBox(
+                width: 150,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: nextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusMedium,
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-
-            /// DOT INDICATOR
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                onboardingData.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 5),
-                  width: _currentIndex == index ? 18 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _currentIndex == index
-                        ? const Color.fromARGB(255, 166, 97, 170)
-                        : Colors.red.shade200,
-                    borderRadius: BorderRadius.circular(6),
+                    elevation: 4,
+                  ),
+                  child: Text(
+                    _currentIndex == onboardingData.length - 1
+                        ? "Get Started"
+                        : "Next",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-
-            /// NEXT BUTTON
-            SizedBox(
-              width: 150,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: nextPage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 221, 128, 217),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  _currentIndex == onboardingData.length - 1
-                      ? "Get Started"
-                      : "Next",
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-          ],
+              const SizedBox(height: 25),
+            ],
+          ),
         ),
       ),
     );

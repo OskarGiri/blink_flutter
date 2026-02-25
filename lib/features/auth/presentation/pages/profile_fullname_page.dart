@@ -1,5 +1,6 @@
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_dob_page.dart';
 import 'package:flutter/material.dart';
@@ -63,10 +64,9 @@ class _ProfileFullNamePageState extends ConsumerState<ProfileFullNamePage> {
 
       if (!mounted) return;
       Navigator.push(
-  context,
-  MaterialPageRoute(builder: (_) => const ProfileDobPage()),
-);
-
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileDobPage()),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -81,21 +81,105 @@ class _ProfileFullNamePageState extends ConsumerState<ProfileFullNamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Full Name")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _fullNameController,
-              decoration: const InputDecoration(labelText: "Full name"),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  "What's Your Full Name?",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Tell us how people know you",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _fullNameController,
+                    style: const TextStyle(color: AppTheme.black, fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: "Enter your full name",
+                      hintStyle: TextStyle(
+                        color: AppTheme.darkGrey.withOpacity(0.6),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.paddingMedium,
+                        vertical: AppTheme.paddingMedium,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _saveAndNext,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryPurple,
+                      disabledBackgroundColor: Colors.white.withOpacity(0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusMedium,
+                        ),
+                      ),
+                      elevation: 4,
+                    ),
+                    child: Text(
+                      _loading ? "Saving..." : "Next",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loading ? null : _saveAndNext,
-              child: Text(_loading ? "Saving..." : "Next"),
-            ),
-          ],
+          ),
         ),
       ),
     );
