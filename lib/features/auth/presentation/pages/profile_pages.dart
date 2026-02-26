@@ -8,8 +8,9 @@ import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/token_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/login_page.dart';
-import 'package:blink_flutter/features/auth/presentation/pages/profile_camera_avatar_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/profile_about_me_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_edit_page.dart';
+import 'package:blink_flutter/features/auth/presentation/pages/profile_manage_photos_page.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/profile_setting_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -278,7 +279,7 @@ class ProfilePage extends ConsumerWidget {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          const ProfileCameraAvatarPage(),
+                                          const ProfileManagePhotosPage(),
                                     ),
                                   );
                                 },
@@ -292,279 +293,13 @@ class ProfilePage extends ConsumerWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const EditProfilePage(),
+                                      builder: (_) =>
+                                          const ProfileAboutMePage(),
                                     ),
                                   );
                                 },
                               ),
-                              const SizedBox(height: 10),
-                              _EnhancementCard(
-                                icon: Icons.verified_outlined,
-                                title: "Get verified",
-                                bonus: "+8%",
-                                onTap: () {},
-                              ),
                             ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ✅ Feature Action Buttons
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _FeatureButton(
-                                  icon: Icons.star_rounded,
-                                  iconColor: const Color(0xFF0066FF),
-                                  count: "0",
-                                  label: "Super Likes",
-                                  actionLabel: "GET MORE",
-                                  onTap: () {},
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _FeatureButton(
-                                  icon: Icons.bolt,
-                                  iconColor: const Color(0xFFAA00FF),
-                                  isBoost: true,
-                                  label: "My Boosts",
-                                  actionLabel: "GET MORE",
-                                  onTap: () {},
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _FeatureButton(
-                                  icon: Icons.favorite,
-                                  iconColor: Colors.pink.shade400,
-                                  label: "Subscriptions",
-                                  actionLabel: "GET MORE",
-                                  onTap: () {},
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // ✅ Premium Subscription Section
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade100,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Header with badge and upgrade button
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.shade300,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Text(
-                                            "🔥",
-                                            style: TextStyle(fontSize: 12),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          const Text(
-                                            "tinder",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.amber.shade600,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: const Text(
-                                              "GOLD",
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 10,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.amber.shade600,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 8,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        "UPGRADE",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  "What's Included",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                // Features table
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        "See Who Likes You",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        "Free",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            size: 16,
-                                            color: Colors.amber.shade700,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        "Top Picks",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        "Free",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            size: 16,
-                                            color: Colors.amber.shade700,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        "Free Super Likes",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        "Free",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            size: 16,
-                                            color: Colors.amber.shade700,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
                           ),
                         ),
 
@@ -628,160 +363,90 @@ class _EnhancementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.pink.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.pink.shade400, size: 24),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Stack(
-            alignment: Alignment.topLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
             children: [
               Container(
-                width: 40,
-                height: 24,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey.shade300,
-                    width: 1.5,
-                    strokeAlign: BorderSide.strokeAlignOutside,
-                  ),
+                  color: Colors.pink.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
+                child: Icon(icon, color: Colors.pink.shade400, size: 24),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Stack(
+                alignment: Alignment.topLeft,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                        strokeAlign: BorderSide.strokeAlignOutside,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.shade400,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      bonus,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
-                  color: Colors.pink.shade400,
+                  border: Border.all(color: Colors.grey.shade300, width: 1.5),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(
-                  bonus,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                  ),
-                ),
+                child: Icon(Icons.add, size: 18, color: Colors.grey.shade600),
               ),
             ],
           ),
-          const SizedBox(width: 12),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 1.5),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(Icons.add, size: 18, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ✅ Feature Action Button Widget
-class _FeatureButton extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String? count;
-  final bool isBoost;
-  final String label;
-  final String actionLabel;
-  final VoidCallback onTap;
-
-  const _FeatureButton({
-    required this.icon,
-    required this.iconColor,
-    this.count,
-    this.isBoost = false,
-    required this.label,
-    required this.actionLabel,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 26),
-            ),
-            const SizedBox(height: 8),
-            if (count != null)
-              Text(
-                count!,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-            if (!isBoost) const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-                color: Colors.grey.shade700,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              actionLabel,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 10,
-                color: Colors.blue.shade600,
-              ),
-            ),
-          ],
         ),
       ),
     );
