@@ -1,5 +1,9 @@
+import 'package:blink_flutter/core/navigation/app_navigator.dart';
+import 'package:blink_flutter/core/navigation/navigation_listener.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/sensors/proximity/proximity_overlay.dart';
+import 'package:blink_flutter/core/sensors/shake/shake_listener.dart';
 import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/presentation/pages/splash_page.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -34,10 +38,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Blink App',
       theme: AppTheme.lightTheme,
       home: const SplashScreen(),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const ProximityOverlay(),
+            const ShakeListener(),
+            const NavigationListener(),
+          ],
+        );
+      },
     );
   }
 }

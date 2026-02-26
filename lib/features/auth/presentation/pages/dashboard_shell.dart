@@ -1,4 +1,5 @@
 import 'dart:math' show min;
+import 'package:blink_flutter/core/navigation/dashboard_tab_provider.dart';
 import 'package:blink_flutter/core/realtime/socket_providers.dart';
 import 'package:blink_flutter/core/realtime/socket_service.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
@@ -11,22 +12,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DashboardShell extends ConsumerStatefulWidget {
-  const DashboardShell({super.key});
+  const DashboardShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   ConsumerState<DashboardShell> createState() => _DashboardShellState();
 }
 
 class _DashboardShellState extends ConsumerState<DashboardShell> {
-  int _index = 0;
-
   final _pages = const [DiscoveryPage(), MatchesPage(), ProfilePage()];
 
   @override
   void initState() {
     super.initState();
+
     // ✅ Initialize socket connection when dashboard loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(dashboardTabIndexProvider.notifier)
+          .setIndex(widget.initialIndex);
       _initializeSocket();
     });
   }
@@ -70,8 +76,10 @@ class _DashboardShellState extends ConsumerState<DashboardShell> {
 
   @override
   Widget build(BuildContext context) {
+    final index = ref.watch(dashboardTabIndexProvider);
+
     return Scaffold(
-      body: _pages[_index],
+      body: _pages[index],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -85,8 +93,9 @@ class _DashboardShellState extends ConsumerState<DashboardShell> {
         child: ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: BottomNavigationBar(
-            currentIndex: _index,
-            onTap: (i) => setState(() => _index = i),
+            currentIndex: index,
+            onTap: (i) =>
+                ref.read(dashboardTabIndexProvider.notifier).setIndex(i),
             backgroundColor: Colors.white,
             selectedItemColor: AppTheme.primaryPurple,
             unselectedItemColor: AppTheme.darkGrey,
@@ -97,7 +106,7 @@ class _DashboardShellState extends ConsumerState<DashboardShell> {
                 icon: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _index == 0
+                    color: index == 0
                         ? AppTheme.primaryPurple.withOpacity(0.1)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
@@ -110,7 +119,7 @@ class _DashboardShellState extends ConsumerState<DashboardShell> {
                 icon: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _index == 1
+                    color: index == 1
                         ? AppTheme.primaryPurple.withOpacity(0.1)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
@@ -123,12 +132,12 @@ class _DashboardShellState extends ConsumerState<DashboardShell> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _index == 2
+                    color: index == 2
                         ? AppTheme.primaryPurple.withOpacity(0.1)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: _LiveProfileNavIcon(isSelected: _index == 2),
+                  child: _LiveProfileNavIcon(isSelected: index == 2),
                 ),
                 label: "Profile",
               ),

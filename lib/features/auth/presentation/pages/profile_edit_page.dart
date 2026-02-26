@@ -17,6 +17,7 @@ class EditProfilePage extends ConsumerStatefulWidget {
 class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _fullName = TextEditingController();
+  final _bio = TextEditingController();
 
   DateTime? _dob;
   String? _gender;
@@ -36,6 +37,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   void dispose() {
     _fullName.dispose();
+    _bio.dispose();
     super.dispose();
   }
 
@@ -62,6 +64,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         dob: json["dob"]?.toString(),
         gender: json["gender"]?.toString(),
         lookingFor: json["lookingFor"]?.toString(),
+        bio: json["bio"]?.toString(),
         photos: (json["photos"] is List)
             ? (json["photos"] as List).map((e) => e.toString()).toList()
             : const [],
@@ -79,6 +82,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   void _apply(ProfileHiveModel p) {
     setState(() {
       _fullName.text = p.fullName.toString();
+      _bio.text = p.bio?.toString() ?? "";
       _dob = _parseDob(p.dob);
       _gender = _safeDropdownValue(p.gender?.toString(), const [
         "male",
@@ -151,6 +155,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         dob: dob.toIso8601String(),
         gender: _gender,
         lookingFor: _lookingFor,
+        bio: _bio.text.trim(),
         photos: existing?.photos ?? const [],
         pendingSync: true,
       );
@@ -165,6 +170,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           "dob": updatedLocal.dob,
           "gender": updatedLocal.gender,
           "lookingFor": updatedLocal.lookingFor,
+          "bio": updatedLocal.bio,
         });
 
         final json = await remote.getMe();
@@ -174,6 +180,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           dob: json["dob"]?.toString(),
           gender: json["gender"]?.toString(),
           lookingFor: json["lookingFor"]?.toString(),
+          bio: json["bio"]?.toString(),
           photos: (json["photos"] is List)
               ? (json["photos"] as List).map((e) => e.toString()).toList()
               : const [],
@@ -303,6 +310,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                             ),
                           ],
                           onChanged: (v) => setState(() => _lookingFor = v),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _bio,
+                          decoration: const InputDecoration(
+                            labelText: "About Me",
+                            hintText: "Tell people about yourself...",
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 4,
+                          maxLength: 500,
+                          validator: (v) {
+                            final s = (v ?? "").trim();
+                            if (s.length > 500) return "Max 500 characters";
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
