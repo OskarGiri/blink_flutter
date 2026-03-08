@@ -1,9 +1,9 @@
 import 'package:blink_flutter/core/services/connectivity/network_info.dart';
 import 'package:blink_flutter/core/services/hive/hive_service.dart';
 import 'package:blink_flutter/core/services/storage/user-session_service.dart';
+import 'package:blink_flutter/core/theme/app_theme.dart';
 import 'package:blink_flutter/features/auth/data/datasources/profile_remote_datasource_provider.dart';
 import 'package:blink_flutter/features/auth/data/models/profile_hive_model.dart';
-import 'package:blink_flutter/features/auth/presentation/widgets/profile_photos_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,7 +17,6 @@ class EditProfilePage extends ConsumerStatefulWidget {
 class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _fullName = TextEditingController();
-  final _bio = TextEditingController();
 
   DateTime? _dob;
   String? _gender;
@@ -37,7 +36,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   void dispose() {
     _fullName.dispose();
-    _bio.dispose();
     super.dispose();
   }
 
@@ -82,7 +80,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   void _apply(ProfileHiveModel p) {
     setState(() {
       _fullName.text = p.fullName.toString();
-      _bio.text = p.bio?.toString() ?? "";
       _dob = _parseDob(p.dob);
       _gender = _safeDropdownValue(p.gender?.toString(), const [
         "male",
@@ -155,7 +152,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         dob: dob.toIso8601String(),
         gender: _gender,
         lookingFor: _lookingFor,
-        bio: _bio.text.trim(),
+        bio: existing?.bio,
         photos: existing?.photos ?? const [],
         pendingSync: true,
       );
@@ -170,7 +167,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           "dob": updatedLocal.dob,
           "gender": updatedLocal.gender,
           "lookingFor": updatedLocal.lookingFor,
-          "bio": updatedLocal.bio,
         });
 
         final json = await remote.getMe();
@@ -211,145 +207,181 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile")),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Photos",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      ProfilePhotosGrid(),
-                      SizedBox(height: 8),
-                      Text(
-                        "First photo is your avatar.",
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
                 ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _fullName,
-                          decoration: const InputDecoration(
-                            labelText: "Full name",
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (v) {
-                            final s = (v ?? "").trim();
-                            if (s.isEmpty) return "Name is required";
-                            if (s.length < 2) return "Too short";
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _DobPicker(
-                          value: _dob,
-                          onChanged: (d) => setState(() => _dob = d),
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _gender,
-                          decoration: const InputDecoration(
-                            labelText: "Gender",
-                            border: OutlineInputBorder(),
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: "male",
-                              child: Text("Male"),
-                            ),
-                            DropdownMenuItem(
-                              value: "female",
-                              child: Text("Female"),
-                            ),
-                            DropdownMenuItem(
-                              value: "other",
-                              child: Text("Other"),
-                            ),
-                          ],
-                          onChanged: (v) => setState(() => _gender = v),
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _lookingFor,
-                          decoration: const InputDecoration(
-                            labelText: "Looking for",
-                            border: OutlineInputBorder(),
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: "men", child: Text("Men")),
-                            DropdownMenuItem(
-                              value: "women",
-                              child: Text("Women"),
-                            ),
-                            DropdownMenuItem(
-                              value: "everyone",
-                              child: Text("Everyone"),
-                            ),
-                          ],
-                          onChanged: (v) => setState(() => _lookingFor = v),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _bio,
-                          decoration: const InputDecoration(
-                            labelText: "About Me",
-                            hintText: "Tell people about yourself...",
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 4,
-                          maxLength: 500,
-                          validator: (v) {
-                            final s = (v ?? "").trim();
-                            if (s.length > 500) return "Max 500 characters";
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: FilledButton(
-                            onPressed: _saving ? null : _save,
-                            child: _saving
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text("Save"),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSmall,
                           ),
                         ),
-                      ],
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Edit Profile",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Update your profile details.",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMedium,
+                          ),
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: ListView(
+                            children: [
+                              TextFormField(
+                                controller: _fullName,
+                                decoration: const InputDecoration(
+                                  labelText: "Full name",
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) {
+                                  final s = (v ?? "").trim();
+                                  if (s.isEmpty) return "Name is required";
+                                  if (s.length < 2) return "Too short";
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              _DobPicker(
+                                value: _dob,
+                                onChanged: (d) => setState(() => _dob = d),
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: _gender,
+                                decoration: const InputDecoration(
+                                  labelText: "Gender",
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: "male",
+                                    child: Text("Male"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "female",
+                                    child: Text("Female"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "other",
+                                    child: Text("Other"),
+                                  ),
+                                ],
+                                onChanged: (v) => setState(() => _gender = v),
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: _lookingFor,
+                                decoration: const InputDecoration(
+                                  labelText: "Looking for",
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: "men",
+                                    child: Text("Men"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "women",
+                                    child: Text("Women"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "everyone",
+                                    child: Text("Everyone"),
+                                  ),
+                                ],
+                                onChanged: (v) =>
+                                    setState(() => _lookingFor = v),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: ElevatedButton(
+                                  onPressed: _saving ? null : _save,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: AppTheme.primaryPurple,
+                                    disabledBackgroundColor: Colors.white
+                                        .withOpacity(0.6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusMedium,
+                                      ),
+                                    ),
+                                    elevation: 4,
+                                  ),
+                                  child: _saving
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            color: AppTheme.primaryPurple,
+                                            strokeWidth: 3,
+                                          ),
+                                        )
+                                      : const Text(
+                                          "SAVE",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
