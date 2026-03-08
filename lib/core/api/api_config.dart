@@ -13,11 +13,11 @@ class ApiConfig {
 
   /// Preferred way: pass backend LAN host at run time.
   /// Example: flutter run --dart-define=LAN_HOST=192.168.1.10
-  static const String lanHostOverride = '192.168.1.64';
+  static const String lanHostOverride = '192.168.1.83';
 
   /// Optional local default for physical-device testing.
   /// Set this to your backend machine IP if you don't want to pass --dart-define every time.
-  static const String defaultLanHost = '192.168.1.64';
+  static const String defaultLanHost = '192.168.1.83';
 
   /// Port of your backend
   static const int port = 3000;

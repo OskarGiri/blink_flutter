@@ -13,13 +13,11 @@ class SignUpPage extends ConsumerStatefulWidget {
 }
 
 class _SignUpPageState extends ConsumerState<SignUpPage> {
-  final _signUpFormKey = GlobalKey<FormState>();
+  final _signUpFromKey = GlobalKey<FormState>();
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -30,21 +28,61 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   }
 
   Future<void> _handleSignup() async {
-    if (!_signUpFormKey.currentState!.validate()) return;
+    if (_signUpFromKey.currentState!.validate()) {
+      await ref
+          .read(authViewModelProvider.notifier)
+          .signUp(
+            username: _usernameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+    }
 
-    await ref
-        .read(authViewModelProvider.notifier)
-        .signUp(
-          username: _usernameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+    // if (_isSubmitting) return;
+
+    // final username = _usernameController.text.trim();
+    // final email = _emailController.text.trim();
+    // final password = _passwordController.text.trim();
+
+    // if (username.isEmpty || email.isEmpty || password.isEmpty) {
+    //   _showSnack(context, "Please fill all fields");
+    //   return;
+    // }
+
+    // setState(() => _isSubmitting = true);
+
+    // bool success;
+    // try {
+    //   success = await context.read<AuthProvider>().signup(
+    //     username,
+    //     email,
+    //     password,
+    //   );
+    // } finally {
+    //   if (mounted) {
+    //     setState(() => _isSubmitting = false);
+    //   }
+    // }
+
+    // if (!mounted) return;
+
+    // if (success) {
+    //   _showSnack(context, "Signup successful. Please login.");
+    //   Navigator.pushReplacement(
+    //     context,
+    //     MaterialPageRoute(builder: (_) => const LoginPage()),
+    //   );
+    // } else {
+    //   _showSnack(context, "Signup failed. Please try again.");
+    // }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Auth State
     final authState = ref.watch(authViewModelProvider);
 
+    // listen for state changes
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.error) {
         _showSnack(
@@ -53,12 +91,15 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         );
       } else if (next.status == AuthStatus.created) {
         _showSnack(context, 'Signup successful. Please login.');
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const LoginPage()),
         );
       }
     });
+
+    final size = MediaQuery.of(context).size;
+    final inputWidth = size.width * 0.85;
 
     return Scaffold(
       body: Container(
@@ -66,162 +107,168 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         height: double.infinity,
         decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.98),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Form(
-                key: _signUpFormKey,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 28),
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Image.asset(
-                        'assets/icon/icon.png',
-                        width: 34,
-                        height: 34,
-                      ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Form(
+              key: _signUpFromKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: size.height * 0.04),
+
+                  Text(
+                    "CREATE ACCOUNT",
+                    style: TextStyle(
+                      fontSize: size.width * 0.08,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(height: 26),
-                    const Text(
-                      'Create your\naccount',
-                      style: TextStyle(
-                        fontSize: 44,
-                        height: 1.05,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryPurple,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Join Blink today",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.85),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Enter your details to continue',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.darkGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ),
+
+                  SizedBox(height: size.height * 0.05),
+
+                  /// USERNAME
+                  Text(
+                    "Username",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 24),
-                    TextFormField(
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
                       controller: _usernameController,
-                      decoration: _fieldDecoration(hint: 'Username'),
-                      validator: (value) {
-                        final text = (value ?? '').trim();
-                        if (text.isEmpty) return 'Username is required';
-                        if (text.length < 3) return 'At least 3 characters';
-                        return null;
-                      },
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// EMAIL
+                  Text(
+                    "Email",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: _fieldDecoration(hint: 'Email'),
-                      validator: (value) {
-                        final text = (value ?? '').trim();
-                        if (text.isEmpty) return 'Email is required';
-                        if (!text.contains('@') || !text.contains('.')) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// PASSWORD
+                  Text(
+                    "Password",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: inputWidth,
+                    child: TextField(
                       controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: _fieldDecoration(
-                        hint: 'Password',
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(
-                              () => _obscurePassword = !_obscurePassword,
+                      obscureText: true,
+                      style: const TextStyle(color: AppTheme.black),
+                      decoration: _inputDecoration(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  /// SIGN UP BUTTON
+                  SizedBox(
+                    width: inputWidth,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primaryPurple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMedium,
+                          ),
+                        ),
+                        elevation: 4,
+                      ),
+                      onPressed: _handleSignup,
+                      child: authState.status == AuthStatus.loading
+                          ? const CircularProgressIndicator(
+                              color: AppTheme.primaryPurple,
+                            )
+                          : const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  /// LOGIN LINK
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already have an account? ",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LoginPage(),
+                              ),
                             );
                           },
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: AppTheme.primaryPurple,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        final text = (value ?? '').trim();
-                        if (text.isEmpty) return 'Password is required';
-                        if (text.length < 6) return 'At least 6 characters';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 34),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: authState.status == AuthStatus.loading
-                            ? null
-                            : _handleSignup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryPurple,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: AppTheme.primaryPurple
-                              .withOpacity(0.5),
-                          disabledForegroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: authState.status == AuthStatus.loading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  height: 1.1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginPage(),
+                          child: const Text(
+                            "Login",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
                             ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppTheme.primaryPurple,
-                        ),
-                        child: const Text(
-                          'Already have an account?',
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+
+                  SizedBox(height: size.height * 0.05),
+                ],
               ),
             ),
           ),
@@ -230,32 +277,21 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     );
   }
 
-  InputDecoration _fieldDecoration({required String hint, Widget? suffixIcon}) {
+  InputDecoration _inputDecoration() {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppTheme.darkGrey,
-        fontWeight: FontWeight.w500,
-      ),
       filled: true,
-      fillColor: AppTheme.lightGrey,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      suffixIcon: suffixIcon,
+      fillColor: Colors.white.withOpacity(0.95),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         borderSide: BorderSide.none,
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.paddingMedium,
+        vertical: AppTheme.paddingMedium,
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 1.2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppTheme.error),
+      hintStyle: TextStyle(
+        color: AppTheme.darkGrey.withOpacity(0.6),
+        fontSize: 14,
       ),
     );
   }
